@@ -5,7 +5,7 @@
 #include "epoll.h"
 
 constexpr int kStdIn = 0;
-constexpr int kStdOut = 0;
+constexpr int kStdOut = 1;
 
 void Read(int fd, oxm::Epoll* epoll) {
   std::array<char, 1024> buf = {};
