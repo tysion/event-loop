@@ -6,7 +6,9 @@
 #include <vector>
 
 namespace oxm {
+
 struct Epoll;
+struct Task;
 
 using Callback = void (*)(int fd, Epoll* epoll, void* user_data);
 
@@ -34,10 +36,15 @@ struct Epoll {
     ExecuteWhenReady(fd, event_type, Wrapper::Call, wrapper);
   }
 
+  void ExecuteWhenReady(int fd, EventType event_type, Callback cb, void* user_data);
+
   void Poll();
 
  private:
-  void ExecuteWhenReady(int fd, EventType event_type, Callback cb, void* user_data);
+
+  void TrackDescriptor(int fd, epoll_event* ev);
+
+  void UntrackDescriptor(int fd);
 
   static int ToEpollEvent(EventType event_type);
 

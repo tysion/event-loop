@@ -2,7 +2,6 @@
 
 namespace oxm {
 
-namespace {
 struct Task {
   Task(int fd, Callback cb, Epoll* epoll, void* user_data)
       : fd_{fd}, cb_{cb}, epoll_{epoll}, user_data_{user_data} {
@@ -23,8 +22,6 @@ struct Task {
   void* user_data_;
 };
 
-}  // namespace
-
 Epoll::Epoll(int approximate_events_count) {
   epfd_ = epoll_create1(EPOLL_CLOEXEC);
   if (epfd_ < 0) {
@@ -41,8 +38,7 @@ void Epoll::ExecuteWhenReady(int fd, EventType event_type, Callback cb, void* us
   ev.data.ptr = task;
   ev.events = ToEpollEvent(event_type);
 
-  epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev);
-  ++events_count_;
+  TrackDescriptor(fd, &ev);
 }
 
 void Epoll::Poll() {
@@ -56,8 +52,7 @@ void Epoll::Poll() {
   for (int i = 0; i < num_ready_events; ++i) {
     auto* task = static_cast<Task*>(ready_events_[i].data.ptr);
 
-    epoll_ctl(epfd_, EPOLL_CTL_DEL, task->GetFileDescriptor(), nullptr);
-    --events_count_;
+    UntrackDescriptor(task->GetFileDescriptor());
 
     task->Execute();
 
@@ -73,4 +68,21 @@ int Epoll::ToEpollEvent(EventType event_type) {
       return EPOLLOUT | EPOLLHUP | EPOLLERR;
   }
 }
+
+void Epoll::TrackDescriptor(int fd, epoll_event* ev) {
+  int err = epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, ev);
+  if (err < 0) {
+    throw std::runtime_error("failed to epoll_ctl");
+  }
+  ++events_count_;
+}
+
+void Epoll::UntrackDescriptor(int fd) {
+  int err = epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, nullptr);
+  if (err < 0) {
+    throw std::runtime_error("failed to epoll_ctl");
+  }
+  --events_count_;
+}
+
 }  // namespace oxm

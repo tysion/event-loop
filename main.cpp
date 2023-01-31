@@ -7,15 +7,15 @@
 constexpr int kStdIn = 0;
 constexpr int kStdOut = 1;
 
-void Read(int fd, oxm::Epoll* epoll) {
+void Process(int fd, oxm::Epoll* epoll) {
   std::array<char, 1024> buf = {};
   size_t n = read(fd, buf.data(), buf.size());
 
   auto on_ready_to_write = [buf, n](int fd, oxm::Epoll* epoll) {
     write(fd, buf.data(), n);
 
-    // выполни колбэк Read когда fd будет готов для чтения
-    epoll->ExecuteWhenReady(fd, oxm::EventType::ReadyToReadFrom, Read);
+    // выполни колбэк Process когда fd будет готов для чтения
+    epoll->ExecuteWhenReady(fd, oxm::EventType::ReadyToReadFrom, Process);
   };
 
   // выполни колбэк on_ready_to_write когда fd (stdout) будет готов для записи
@@ -25,7 +25,7 @@ void Read(int fd, oxm::Epoll* epoll) {
 int main() {
   oxm::Epoll epoll;
 
-  auto on_ready_to_read = [](int fd, oxm::Epoll* epoll) { Read(fd, epoll); };
+  auto on_ready_to_read = [](int fd, oxm::Epoll* epoll) { Process(fd, epoll); };
 
   // выполни колбэк on_ready_to_read when когда fd (stdin) будет готов для чтения
   epoll.ExecuteWhenReady(kStdIn, oxm::EventType::ReadyToReadFrom, on_ready_to_read);
