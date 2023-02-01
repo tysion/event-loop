@@ -1,0 +1,7 @@
+Language: Cpp
+BasedOnStyle: Google
+ColumnLimit: 100
+AllowShortFunctionsOnASingleLine: None
+AllowAllConstructorInitializersOnNextLine: true
+DerivePointerAlignment: false  # Make sure the * or & align on the l
+AllowShortEnumsOnASingleLine: false

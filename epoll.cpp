@@ -31,7 +31,7 @@ Epoll::Epoll(int approximate_events_count) {
   ready_events_.reserve(approximate_events_count);
 }
 
-void Epoll::ExecuteWhenReady(int fd, EventType event_type, Callback cb, void* user_data) {
+void Epoll::ExecuteWhen(int fd, EventType event_type, Callback cb, void* user_data) {
   auto* task = new Task(fd, cb, this, user_data);
 
   epoll_event ev{};
@@ -50,11 +50,14 @@ void Epoll::Poll() {
   }
 
   for (int i = 0; i < num_ready_events; ++i) {
-    auto* task = static_cast<Task*>(ready_events_[i].data.ptr);
+    auto& event = ready_events_[i];
+    auto* task = static_cast<Task*>(event.data.ptr);
 
     UntrackDescriptor(task->GetFileDescriptor());
 
-    task->Execute();
+    if (!(event.events & EPOLLHUP || event.events & EPOLLERR)) {
+      task->Execute();
+    }
 
     delete task;
   }

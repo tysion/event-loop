@@ -21,7 +21,7 @@ struct Epoll {
   explicit Epoll(int approximate_events_count = 64);
 
   template <typename F>
-  void ExecuteWhenReady(int fd, EventType event_type, F func) {
+  void ExecuteWhen(int fd, EventType event_type, F func) {
     struct Wrapper {
       F func;
       static void Call(int fd, Epoll* epoll, void* user_data) {
@@ -33,10 +33,10 @@ struct Epoll {
 
     auto* wrapper = new Wrapper{std::move(func)};
 
-    ExecuteWhenReady(fd, event_type, Wrapper::Call, wrapper);
+    ExecuteWhen(fd, event_type, Wrapper::Call, wrapper);
   }
 
-  void ExecuteWhenReady(int fd, EventType event_type, Callback cb, void* user_data);
+  void ExecuteWhen(int fd, EventType event_type, Callback cb, void* user_data);
 
   void Poll();
 
