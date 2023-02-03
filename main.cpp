@@ -21,6 +21,7 @@ int main() {
   oxm::Event read_input_event;
   read_input_event.fd = kStdIn;
   read_input_event.TriggerOn(oxm::Event::Type::Read);
+  read_input_event.TriggerOn(oxm::Event::Type::Write);
 
   const oxm::Event::Id print_input = loop->RegisterEvent(print_input_event);
   const oxm::Event::Id print_error = loop->RegisterEvent(print_error_event);
@@ -56,6 +57,10 @@ int main() {
 
     if (oxm::CanRead(mask)) {
       n = read(kStdIn, buf.data(), buf.size());
+
+      if (oxm::CanWrite(mask)) {
+        write(kStdIn, "> ", 2);
+      }
 
       loop->Schedule(print_input);
     }
