@@ -18,7 +18,7 @@ uint32_t ToEpollEvent(Event::Mask mask) {
   return epoll_event;
 }
 
-Event::Mask ToStatus(uint32_t events) {
+Event::Mask ToEventMask(uint32_t events) {
   Event::Mask mask = Event::Type::None;
 
   if (events & EPOLLERR) {
@@ -87,7 +87,7 @@ void EpollNotificator::ListReadyEventIds(int timeout, EventIds* ready_event_ids)
   ready_event_ids->reserve(num_ready_events);
   for (int i = 0; i < num_ready_events; ++i) {
     const auto& event = events_[i];
-    ready_event_ids->push_back({ToStatus(event.events), event.data.u64});
+    ready_event_ids->push_back({ToEventMask(event.events), event.data.u64});
   }
 }
 
