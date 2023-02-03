@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "oxm/event_loop.h"
 
 #include "epoll_notificator.h"
@@ -27,7 +29,7 @@ void EventLoop::Schedule(Event::Id id) {
 }
 
 void EventLoop::Bind(Event::Id id, TaskPtr task) {
-  ctx_->Bind(id, task);
+  ctx_->Bind(id, std::move(task));
 }
 
 EventLoop::~EventLoop() = default;
