@@ -36,7 +36,7 @@ int main() {
     }
 
     if (oxm::CanWrite(mask)) {
-      write(kStdOut, buf.data(), n);
+      auto _ = write(kStdOut, buf.data(), n);
     }
   });
 
@@ -46,7 +46,7 @@ int main() {
     }
 
     if (oxm::CanWrite(mask)) {
-      write(kStdErr, "error happened", 15);
+      auto _ = write(kStdErr, "error happened", 15);
     }
   });
 
@@ -59,7 +59,7 @@ int main() {
       n = read(kStdIn, buf.data(), buf.size());
 
       if (oxm::CanWrite(mask)) {
-        write(kStdIn, "> ", 2);
+        auto _ = write(kStdIn, "> ", 2);
       }
 
       loop->Schedule(print_input);

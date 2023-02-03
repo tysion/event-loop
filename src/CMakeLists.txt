@@ -12,5 +12,17 @@ set(SOURCES
     epoll_notificator.h
     task.h ../include/oxm/event.h)
 
+set(PUBLIC_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/oxm/event.h
+    ${CMAKE_SOURCE_DIR}/include/oxm/event_loop.h
+)
+
 add_library(oxmel STATIC ${SOURCES})
 target_include_directories(oxmel PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+install(TARGETS oxmel
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)
+
+install(FILES ${PUBLIC_HEADERS} DESTINATION include/oxm)
