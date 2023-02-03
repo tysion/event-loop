@@ -17,7 +17,7 @@ struct EpollNotificator final : IEventNotificator {
 
   void Unwatch(int fd) final;
 
-  void ListReadyEventIds(int timeout, std::vector<EventId>* ready_event_ids) final;
+  void ListReadyEventIds(int timeout, std::vector<std::pair<Status, EventId>>* ready_event_ids) final;
 
  private:
 

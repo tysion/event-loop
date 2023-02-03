@@ -15,7 +15,8 @@ struct IEventNotificator {
 
   virtual void Unwatch(int fd) = 0;
 
-  virtual void ListReadyEventIds(int timeout, std::vector<EventId>* ready_event_ids) = 0;
+  virtual void ListReadyEventIds(int timeout,
+                                 std::vector<std::pair<Status, EventId>>* ready_event_ids) = 0;
 };
 
 }  // namespace oxm

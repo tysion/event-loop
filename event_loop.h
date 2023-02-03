@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 
 namespace oxm {
@@ -7,40 +8,40 @@ namespace oxm {
 struct EventLoop;
 struct EventLoopContext;
 
-using Callback = void (*)(EventLoop* event_loop, void* user_data);
-
 enum class EventType {
   ReadyToReadFrom,
   ReadyToWriteTo
 };
+
+struct Task;
+using TaskPtr = std::shared_ptr<Task>;
+
+struct Event {
+  int fd;
+  EventType type;
+};
+
+using EventId = size_t;
+
+enum class Status {
+  Ok,
+  Error
+};
+
+using Callback = std::function<void(Status)>;
 
 struct EventLoop {
   EventLoop();
 
   ~EventLoop();
 
-  template <typename F>
-  void ExecuteWhen(int fd, EventType event_type, F func) {
-    struct Wrapper {
-      F func;
-      static void Call(EventLoop* event_loop, void* self) {
-        static_cast<const Wrapper*>(self)->func(event_loop);
-      }
-    };
+  TaskPtr CreateTask(Callback&& callback);
 
-    auto* wrapper = new Wrapper{std::move(func)};
+  EventId RegisterEvent(Event event);
 
-    ExecuteWhen(fd, event_type, Wrapper::Call, wrapper);
-  }
+  void Schedule(EventId id);
 
-  /**
-   * Executes user provided callback when an event occurs for the passed file descriptor
-   * @param fd file descriptor to watch for
-   * @param event event, @see Event
-   * @param cb user callback
-   * @param user_data user data, that will be passed into the callback
-   */
-  void ExecuteWhen(int fd, EventType event, Callback cb, void* user_data);
+  void Bind(EventId id, TaskPtr task);
 
   /**
    * Wait for events and executes callbacks

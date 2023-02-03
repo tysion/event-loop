@@ -10,12 +10,24 @@ EventLoop::EventLoop() {
   ctx_ = std::make_unique<EventLoopContext>(std::move(notifier));
 }
 
-void EventLoop::ExecuteWhen(int fd, EventType event, Callback cb, void* user_data) {
-  ctx_->Add(fd, event, cb, user_data);
-}
-
 void EventLoop::Poll(int timeout) {
   ctx_->Poll(timeout);
+}
+
+TaskPtr EventLoop::CreateTask(Callback&& callback) {
+  return ctx_->CreateTask(std::move(callback));
+}
+
+EventId EventLoop::RegisterEvent(Event event) {
+  return ctx_->RegisterEvent(event);
+}
+
+void EventLoop::Schedule(EventId id) {
+  return ctx_->Schedule(id);
+}
+
+void EventLoop::Bind(EventId id, TaskPtr task) {
+  ctx_->Bind(id, task);
 }
 
 EventLoop::~EventLoop() = default;

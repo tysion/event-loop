@@ -1,35 +1,43 @@
 #include "event_loop_context.h"
 
+#include <utility>
+
 namespace oxm {
 
-EventCallback& EventLoopContext::GetEventCallbackById(EventId id) {
-  return callbacks_[id];
-}
-
-EventId EventLoopContext::EmplaceEventCallback(Callback cb, void* user_data) {
-  callbacks_.emplace_back(cb, user_data);
-  return callbacks_.size() - 1;
-}
-
-void EventLoopContext::Add(int fd, EventType event, Callback cb, void* user_data) {
-  const auto id = EmplaceEventCallback(cb, user_data);
-  notificator_->Watch(fd, event, id);
-}
-
-void EventLoopContext::Remove(int fd) {
-  notificator_->Unwatch(fd);
+TaskPtr EventLoopContext::CreateTask(Callback&& callback) {
+  return std::make_shared<Task>(std::move(callback));
 }
 
 void EventLoopContext::Poll(int timeout) {
   notificator_->ListReadyEventIds(timeout, &ready_event_ids_);
 
-  for (const EventId id : ready_event_ids_) {
-    auto& callback = GetEventCallbackById(id);
+  for (const auto& [status, id]: ready_event_ids_) {
+    const auto& [event, task] = bound_events_[id];
 
-    callback.Call(event_loop_);
+    notificator_->Unwatch(event.fd);
+
+    task->Execute(status);
   }
 
   ready_event_ids_.clear();
+}
+
+EventId EventLoopContext::RegisterEvent(Event event) {
+  bound_events_.emplace_back(event, nullptr);
+  return bound_events_.size() - 1;
+}
+
+void EventLoopContext::Bind(EventId id, TaskPtr task) {
+  bound_events_[id].second = std::move(task);
+}
+
+void EventLoopContext::Schedule(EventId id) {
+  const auto& [event, task] = bound_events_[id];
+  if (task == nullptr) {
+    throw std::logic_error("unable to schedule event with no bound task");
+  }
+
+  notificator_->Watch(event.fd, event.type, id);
 }
 
 }  // namespace oxm

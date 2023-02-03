@@ -4,7 +4,7 @@
 
 namespace oxm {
 
-int ToEpollEvent(EventType event_type) {
+uint32_t ToEpollEvent(EventType event_type) {
   switch (event_type) {
     case EventType::ReadyToReadFrom:
       return EPOLLIN | EPOLLHUP | EPOLLERR;
@@ -13,6 +13,22 @@ int ToEpollEvent(EventType event_type) {
     default:
       assert(false); return -1;
   }
+}
+
+Status ToStatus(uint32_t events) {
+  if (events & EPOLLERR) {
+    return Status::Error;
+  }
+
+  if (events & EPOLLHUP) {
+    return Status::Error;
+  }
+
+  if (events & EPOLLIN || events & EPOLLOUT) {
+    return Status::Ok;
+  }
+
+  return Status::Error;
 }
 
 EpollNotificator::EpollNotificator(int approximate_events_count) {
@@ -49,7 +65,7 @@ void EpollNotificator::Unwatch(int fd) {
   --events_count_;
 }
 
-void EpollNotificator::ListReadyEventIds(int timeout, std::vector<EventId>* ready_event_ids) {
+void EpollNotificator::ListReadyEventIds(int timeout, std::vector<std::pair<Status, EventId>>* ready_event_ids) {
   assert(ready_event_ids);
   assert(ready_event_ids->empty());
 
@@ -62,7 +78,7 @@ void EpollNotificator::ListReadyEventIds(int timeout, std::vector<EventId>* read
   ready_event_ids->reserve(num_ready_events);
   for (int i = 0; i < num_ready_events; ++i) {
     const auto& event = events_[i];
-    ready_event_ids->push_back(event.data.u64);
+    ready_event_ids->push_back({ToStatus(event.events), event.data.u64});
   }
 }
 
