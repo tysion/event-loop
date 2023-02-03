@@ -18,15 +18,15 @@ TaskPtr EventLoop::CreateTask(Callback&& callback) {
   return ctx_->CreateTask(std::move(callback));
 }
 
-EventId EventLoop::RegisterEvent(Event event) {
+Event::Id EventLoop::RegisterEvent(Event event) {
   return ctx_->RegisterEvent(event);
 }
 
-void EventLoop::Schedule(EventId id) {
+void EventLoop::Schedule(Event::Id id) {
   return ctx_->Schedule(id);
 }
 
-void EventLoop::Bind(EventId id, TaskPtr task) {
+void EventLoop::Bind(Event::Id id, TaskPtr task) {
   ctx_->Bind(id, task);
 }
 

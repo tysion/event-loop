@@ -2,8 +2,6 @@
 
 #include <sys/epoll.h>
 
-#include <vector>
-
 #include "event_notificator_interface.h"
 
 namespace oxm {
@@ -11,17 +9,16 @@ namespace oxm {
 struct EpollNotificator final : IEventNotificator {
   explicit EpollNotificator(int approximate_events_count = 64);
 
-  void Watch(int fd, EventType type, EventId id) final;
+  void Watch(int fd, Event::Mask mask, Event::Id id) final;
 
-  void Update(int fd, EventType type) final;
+  void Update(int fd, Event::Mask mask) final;
 
   void Unwatch(int fd) final;
 
-  void ListReadyEventIds(int timeout, std::vector<std::pair<Status, EventId>>* ready_event_ids) final;
+  void ListReadyEventIds(int timeout, EventIds* ready_event_ids) final;
 
  private:
-
-  void Control(int cmd, int fd, EventType type, EventId id = 0);
+  void Control(int cmd, int fd, Event::Mask mask, Event::Id id);
 
   int epfd_;
   size_t events_count_ = 0;

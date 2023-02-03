@@ -1,4 +1,5 @@
 #include <array>
+#include <cstring>
 
 #include "event_loop.h"
 
@@ -7,37 +8,69 @@ constexpr int kStdOut = 1;
 constexpr int kStdErr = 2;
 
 int main() {
-  oxm::EventLoop loop;
+  auto loop = std::make_shared<oxm::EventLoop>();
+
+  oxm::Event print_input_event;
+  print_input_event.fd = kStdOut;
+  print_input_event.TriggerOn(oxm::Event::Type::Write);
+
+  oxm::Event print_error_event;
+  print_error_event.fd = kStdErr;
+  print_error_event.TriggerOn(oxm::Event::Type::Write);
+
+  oxm::Event read_input_event;
+  read_input_event.fd = kStdIn;
+  read_input_event.TriggerOn(oxm::Event::Type::Read);
+
+  const oxm::Event::Id print_input = loop->RegisterEvent(print_input_event);
+  const oxm::Event::Id print_error = loop->RegisterEvent(print_error_event);
+  const oxm::Event::Id read_input = loop->RegisterEvent(read_input_event);
 
   std::array<char, 1024> buf = {};
   size_t n = 0;
 
-  oxm::EventId write_ev1 = loop.RegisterEvent({kStdOut, oxm::EventType::ReadyToWriteTo});
-  oxm::EventId write_ev2 = loop.RegisterEvent({kStdErr, oxm::EventType::ReadyToWriteTo});
-  oxm::EventId read_ev = loop.RegisterEvent({kStdIn, oxm::EventType::ReadyToReadFrom});
+  oxm::TaskPtr print_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {
+    if (oxm::HasError(mask)) {
+      loop->Schedule(print_error);
+    }
 
-  oxm::TaskPtr write_task1 = loop.CreateTask([&](oxm::Status status) {
-    write(kStdOut, buf.data(), n);
+    if (oxm::CanWrite(mask)) {
+      write(kStdOut, buf.data(), n);
+    }
   });
 
-  oxm::TaskPtr write_task2 = loop.CreateTask([&](oxm::Status status) {
-    write(kStdErr, buf.data(), n);
+  oxm::TaskPtr print_error_task = loop->CreateTask([&](oxm::Event::Mask mask) {
+    if (oxm::HasError(mask)) {
+      throw std::runtime_error("internal error");
+    }
+
+    if (oxm::CanWrite(mask)) {
+      write(kStdErr, "error happened", 15);
+    }
   });
 
-  oxm::TaskPtr read_task = loop.CreateTask([&](oxm::Status status) {
-    n = read(kStdIn, buf.data(), buf.size());
-    loop.Schedule(write_ev1);
-    loop.Schedule(write_ev2);
-    loop.Schedule(read_ev);
+  oxm::TaskPtr read_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {
+    if (oxm::HasError(mask)) {
+      loop->Schedule(print_error);
+    }
+
+    if (oxm::CanRead(mask)) {
+      n = read(kStdIn, buf.data(), buf.size());
+
+      loop->Schedule(print_input);
+    }
+
+    loop->Schedule(read_input);
   });
 
-  loop.Bind(read_ev, read_task);
-  loop.Bind(write_ev1, write_task1);
-  loop.Bind(write_ev2, write_task2);
-  loop.Schedule(read_ev);
+  loop->Bind(read_input, read_input_task);
+  loop->Bind(print_input, print_input_task);
+  loop->Bind(print_error, print_error_task);
+
+  loop->Schedule(read_input);
 
   while (true) {
-    loop.Poll();
+    loop->Poll();
   }
 
   return 0;

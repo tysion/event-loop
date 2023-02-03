@@ -4,31 +4,40 @@
 
 namespace oxm {
 
-uint32_t ToEpollEvent(EventType event_type) {
-  switch (event_type) {
-    case EventType::ReadyToReadFrom:
-      return EPOLLIN | EPOLLHUP | EPOLLERR;
-    case EventType::ReadyToWriteTo:
-      return EPOLLOUT | EPOLLHUP | EPOLLERR;
-    default:
-      assert(false); return -1;
+uint32_t ToEpollEvent(Event::Mask mask) {
+  uint32_t epoll_event = 0;
+
+  if (mask & Event::Type::Read) {
+    epoll_event |= EPOLLIN;
   }
+
+  if (mask & Event::Type::Write) {
+    epoll_event |= EPOLLOUT;
+  }
+
+  return epoll_event;
 }
 
-Status ToStatus(uint32_t events) {
+Event::Mask ToStatus(uint32_t events) {
+  Event::Mask mask = Event::Type::None;
+
   if (events & EPOLLERR) {
-    return Status::Error;
+    mask |= Event::Type::FileDescriptorError;
   }
 
   if (events & EPOLLHUP) {
-    return Status::Error;
+    mask |= Event::Type::RemoteConnectionClosed;
   }
 
-  if (events & EPOLLIN || events & EPOLLOUT) {
-    return Status::Ok;
+  if (events & EPOLLIN) {
+    mask |= Event::Type::Read;
   }
 
-  return Status::Error;
+  if (events & EPOLLOUT) {
+    mask |= Event::Type::Write;
+  }
+
+  return mask;
 }
 
 EpollNotificator::EpollNotificator(int approximate_events_count) {
@@ -40,10 +49,10 @@ EpollNotificator::EpollNotificator(int approximate_events_count) {
   }
 }
 
-void EpollNotificator::Control(int cmd, int fd, EventType type, EventId id) {
+void EpollNotificator::Control(int cmd, int fd, Event::Mask mask, Event::Id id) {
   epoll_event ev{};
   ev.data.u64 = id;
-  ev.events = ToEpollEvent(type);
+  ev.events = ToEpollEvent(mask);
 
   int err = epoll_ctl(epfd_, cmd, fd, &ev);
   if (err < 0) {
@@ -51,21 +60,21 @@ void EpollNotificator::Control(int cmd, int fd, EventType type, EventId id) {
   }
 }
 
-void EpollNotificator::Watch(int fd, EventType type, EventId id) {
-  Control(EPOLL_CTL_ADD, fd, type, id);
+void EpollNotificator::Watch(int fd, Event::Mask mask, Event::Id id) {
+  Control(EPOLL_CTL_ADD, fd, mask, id);
   ++events_count_;
 }
 
-void EpollNotificator::Update(int fd, EventType type) {
-  Control(EPOLL_CTL_MOD, fd, type, EventId{});
+void EpollNotificator::Update(int fd, Event::Mask mask) {
+  Control(EPOLL_CTL_MOD, fd, mask, Event::Id{});
 }
 
 void EpollNotificator::Unwatch(int fd) {
-  Control(EPOLL_CTL_DEL, fd, EventType{}, EventId{});
+  Control(EPOLL_CTL_DEL, fd, Event::Type::None, Event::Id{});
   --events_count_;
 }
 
-void EpollNotificator::ListReadyEventIds(int timeout, std::vector<std::pair<Status, EventId>>* ready_event_ids) {
+void EpollNotificator::ListReadyEventIds(int timeout, EventIds* ready_event_ids) {
   assert(ready_event_ids);
   assert(ready_event_ids->empty());
 

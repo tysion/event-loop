@@ -7,11 +7,11 @@
 namespace oxm {
 
 struct Task {
-  explicit Task(std::function<void(Status)>&& callback) : callback_(std::move(callback)) {
+  explicit Task(Callback&& callback) : callback_(std::move(callback)) {
   }
 
-  void Execute(Status status) {
-    callback_(status);
+  void Execute(Event::Mask mask) {
+    callback_(mask);
   }
 
  private:
