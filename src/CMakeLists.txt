@@ -10,7 +10,7 @@ set(SOURCES
     event_notificator_interface.h
     epoll_notificator.cpp
     epoll_notificator.h
-    task.h)
+    task.h ../include/oxm/event.h)
 
 add_library(oxmel STATIC ${SOURCES})
 target_include_directories(oxmel PRIVATE ${CMAKE_SOURCE_DIR}/include)
