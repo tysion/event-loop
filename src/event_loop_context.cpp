@@ -32,6 +32,10 @@ void EventLoopContext::Bind(Event::Id id, TaskPtr task) {
 }
 
 void EventLoopContext::Schedule(Event::Id id) {
+  if (id >= bound_events_.size()) {
+    throw std::invalid_argument("invalid event id");
+  }
+
   const auto& [event, task] = bound_events_[id];
   if (task == nullptr) {
     throw std::logic_error("unable to schedule event with no bound task");

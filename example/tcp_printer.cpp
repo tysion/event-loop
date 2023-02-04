@@ -52,7 +52,7 @@ int main() {
 
   auto listenEventId = eventloop->RegisterEvent(event);
 
-  auto task1 = eventloop->CreateTask([=](oxm::Event::Mask mask) {
+  auto task1 = eventloop->CreateTask([eventloop, listen_sock, listenEventId](oxm::Event::Mask mask) {
     sockaddr_in client_addr;
     socklen_t client_addr_size = sizeof(client_addr);
     int conn_sock = accept(listen_sock, (sockaddr *)&client_addr, &client_addr_size);
@@ -72,7 +72,7 @@ int main() {
 
     auto eventId = eventloop->RegisterEvent(event);
 
-    auto task2 = eventloop->CreateTask([=](oxm::Event::Mask mask) {
+    auto task2 = eventloop->CreateTask([eventloop, conn_sock, eventId](oxm::Event::Mask mask) {
       if (mask == oxm::Event::None) {
         perror("[ERROR:9] None");
         return;
@@ -86,13 +86,8 @@ int main() {
       if (oxm::CanRead(mask)) {
         char buffer[4096];
         int len = read(conn_sock, &buffer, 4096);
-        //                if (len < 0) {
-        //                    perror("[ERROR:9] read");
-        //                    exit(EXIT_FAILURE);
-        //                }
-
         if (len > 0) {
-          printf("message: %s", buffer);
+          write(1, buffer, len);
         }
 
         eventloop->Schedule(eventId);
