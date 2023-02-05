@@ -11,11 +11,11 @@ struct IEventNotificator {
 
   virtual void Watch(int fd, Event::Mask mask, Event::Id id) = 0;
 
-  virtual void Update(int fd, Event::Mask mask) = 0;
+  virtual void Modify(int fd, Event::Mask mask) = 0;
 
   virtual void Unwatch(int fd) = 0;
 
-  virtual void ListReadyEventIds(int timeout, EventIds* ready_event_ids) = 0;
+  virtual void Wait(int timeout, EventIds* ready_event_ids) = 0;
 };
 
 }  // namespace oxm

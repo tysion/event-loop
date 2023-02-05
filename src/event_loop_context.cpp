@@ -9,7 +9,7 @@ TaskPtr EventLoopContext::CreateTask(Callback&& callback) {
 }
 
 void EventLoopContext::Poll(int timeout) {
-  notificator_->ListReadyEventIds(timeout, &ready_event_ids_);
+  notificator_->Wait(timeout, &ready_event_ids_);
 
   for (const auto& [mask, id]: ready_event_ids_) {
     const auto& [event, task] = event_binds_[id];

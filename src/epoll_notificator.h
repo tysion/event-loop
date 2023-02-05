@@ -11,11 +11,11 @@ struct EpollNotificator final : IEventNotificator {
 
   void Watch(int fd, Event::Mask mask, Event::Id id) final;
 
-  void Update(int fd, Event::Mask mask) final;
+  void Modify(int fd, Event::Mask mask) final;
 
   void Unwatch(int fd) final;
 
-  void ListReadyEventIds(int timeout, EventIds* ready_event_ids) final;
+  void Wait(int timeout, EventIds* ready_event_ids) final;
 
  private:
   void Control(int cmd, int fd, Event::Mask mask, Event::Id id);

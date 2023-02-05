@@ -65,7 +65,7 @@ void EpollNotificator::Watch(int fd, Event::Mask mask, Event::Id id) {
   ++events_count_;
 }
 
-void EpollNotificator::Update(int fd, Event::Mask mask) {
+void EpollNotificator::Modify(int fd, Event::Mask mask) {
   Control(EPOLL_CTL_MOD, fd, mask, Event::Id{});
 }
 
@@ -74,7 +74,7 @@ void EpollNotificator::Unwatch(int fd) {
   --events_count_;
 }
 
-void EpollNotificator::ListReadyEventIds(int timeout, EventIds* ready_event_ids) {
+void EpollNotificator::Wait(int timeout, EventIds* ready_event_ids) {
   assert(ready_event_ids);
   assert(ready_event_ids->empty());
 
