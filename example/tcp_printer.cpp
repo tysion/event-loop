@@ -4,77 +4,116 @@
 
 #include <utility>
 
+struct TcpAcceptor;
+struct TcpConnection;
+
 using EventLoopPtr = std::shared_ptr<oxm::EventLoop>;
+using TcpAcceptorPtr = std::shared_ptr<TcpAcceptor>;
+using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 
-struct TcpAcceptor {
-  explicit TcpAcceptor(EventLoopPtr loop, int listen_socket)
-      : loop_{std::move(loop)}, listen_socket_{listen_socket} {
-    oxm::Event accept_event;
-    accept_event.TriggerOn(oxm::Event::Read);
-    accept_event.fd = listen_socket_;
+void PrintErrorMessage(oxm::Event::Mask mask) {
+  if (mask & oxm::Event::RemoteConnectionClosed) {
+    printf("Error: Remote connection was closed");
+  } else if (mask & oxm::Event::FileDescriptorError) {
+    printf("Error: EPOLL: File descriptor error");
+  } else {
+    printf("Error: Unknown error");
+  }
+}
 
-    accept_event_id_ = loop_->RegisterEvent(accept_event);
-    oxm::TaskPtr on_accept = loop_->CreateTask([this](oxm::Event::Mask mask) {
+struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
+  explicit TcpConnection(EventLoopPtr loop, int socket) : loop_{std::move(loop)}, socket_{socket} {
+    oxm::Event event;
+    event.fd = socket_;
+    event.TriggerOn(oxm::Event::Read);
+    event_id_ = loop_->RegisterEvent(event);
+
+    CleanBuffer();
+
+    printf("%d joined server\n", socket_);
+  }
+
+  ~TcpConnection() {
+    close(socket_);
+    printf("%d left server\n", socket_);
+  }
+
+  void HandleAsync() {
+    oxm::TaskPtr on_connect = loop_->CreateTask([self = shared_from_this()](oxm::Event::Mask mask) {
       if (oxm::HasError(mask)) {
-        HandleError(mask, accept_event_id_);
+        self->OnError(mask);
         return;
       }
 
-      const int connection_socket = Accept();
-      HandleConnection(connection_socket);
+      if (oxm::CanRead(mask)) {
+        self->OnRead();
+      }
     });
 
-    loop_->Bind(accept_event_id_, on_accept);
-  }
-
-  void AcceptAsync() {
-    loop_->Schedule(accept_event_id_);
+    loop_->Bind(event_id_, on_connect);
+    loop_->Schedule(event_id_);
   }
 
  private:
-  void HandleConnection(int connection_socket) {
-    oxm::Event connection_event;
-    connection_event.fd = connection_socket;
-    connection_event.TriggerOn(oxm::Event::Read);
-
-    oxm::Event::Id connection_event_id = loop_->RegisterEvent(connection_event);
-    oxm::TaskPtr on_connect =
-        loop_->CreateTask([this, connection_event_id, connection_socket](oxm::Event::Mask mask) {
-          if (oxm::HasError(mask)) {
-            HandleError(mask, connection_event_id);
-            return;
-          }
-
-          if (oxm::CanRead(mask)) {
-            char buffer[4096];
-            auto len = read(connection_socket, &buffer, 4096);
-            if (len > 0) {
-              write(1, buffer, len);
-            }
-          }
-        });
-
-    loop_->Bind(connection_event_id, on_connect);
-    loop_->Schedule(connection_event_id);
+  void OnError(oxm::Event::Mask mask) {
+    PrintErrorMessage(mask);
+    loop_->Unshedule(event_id_, true);
   }
 
-  void HandleError(oxm::Event::Mask mask, oxm::Event::Id id) {
-    if (mask & oxm::Event::RemoteConnectionClosed) {
-      printf("Error: Remote connection was closed");
-    } else if (mask & oxm::Event::FileDescriptorError) {
-      printf("Error: EPOLL: File descriptor error");
-    } else {
-      printf("Error: Unknown error");
+  void OnRead() {
+    auto len = read(socket_, buffer.data(), 4096);
+    if (len > 0) {
+      printf("[%d]: %s", socket_, buffer.data());
     }
 
-    loop_->Unshedule(id, true);
+    CleanBuffer();
   }
 
-  int Accept() const {
+  void CleanBuffer() {
+    buffer.fill('\0');
+  }
+
+  const int socket_;
+  oxm::Event::Id event_id_;
+  EventLoopPtr loop_;
+
+  std::array<char, 4096> buffer = {};
+};
+
+struct TcpAcceptor : std::enable_shared_from_this<TcpAcceptor> {
+  explicit TcpAcceptor(EventLoopPtr loop, int listen_socket)
+      : loop_{std::move(loop)}, socket_{listen_socket} {
+    oxm::Event accept_event;
+    accept_event.TriggerOn(oxm::Event::Read);
+    accept_event.fd = socket_;
+    event_id_ = loop_->RegisterEvent(accept_event);
+  }
+
+  void AcceptAsync() {
+    oxm::TaskPtr on_accept = loop_->CreateTask([self = shared_from_this()](oxm::Event::Mask mask) {
+      if (oxm::HasError(mask)) {
+        self->OnError(mask);
+        return;
+      }
+
+      self->OnConnect();
+    });
+
+    loop_->Bind(event_id_, on_accept);
+    loop_->Schedule(event_id_);
+  }
+
+ private:
+  void OnError(oxm::Event::Mask mask) {
+    PrintErrorMessage(mask);
+    loop_->Unshedule(event_id_, true);
+  }
+
+  void OnConnect() const {
     sockaddr_in address = {};
     socklen_t address_size = sizeof(address);
 
-    int connection_socket = accept(listen_socket_, (sockaddr*)&address, &address_size);
+    int connection_socket = accept(socket_, (sockaddr*)&address, &address_size);
     if (connection_socket == -1) {
       throw std::runtime_error("Accept failed");
     }
@@ -83,15 +122,15 @@ struct TcpAcceptor {
       throw std::runtime_error("Make non blocking failed");
     }
 
-    return connection_socket;
+    std::make_shared<TcpConnection>(loop_, connection_socket)->HandleAsync();
   }
 
-  const int listen_socket_;
-  oxm::Event::Id accept_event_id_;
+  const int socket_;
+  oxm::Event::Id event_id_;
   EventLoopPtr loop_;
 };
 
-TcpAcceptor Listen(EventLoopPtr loop, const char* address, int port) {
+TcpAcceptorPtr Listen(EventLoopPtr loop, const char* address, int port) {
   int listen_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (listen_socket < 0) {
     throw std::runtime_error("Socket cannot be created!");
@@ -109,15 +148,13 @@ TcpAcceptor Listen(EventLoopPtr loop, const char* address, int port) {
     throw std::runtime_error("Socket cannot be switched to listen mode!");
   }
 
-  return TcpAcceptor(std::move(loop), listen_socket);
+  return std::make_shared<TcpAcceptor>(std::move(loop), listen_socket);
 }
 
 int main() {
   auto loop = std::make_shared<oxm::EventLoop>();
 
-  auto acceptor = Listen(loop, "0.0.0.0", 9000);
-
-  acceptor.AcceptAsync();
+  Listen(loop, "0.0.0.0", 9000)->AcceptAsync();
 
   while (true) {
     loop->Poll();
