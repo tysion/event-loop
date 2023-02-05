@@ -1,9 +1,10 @@
 macro(add_example name sources)
-    add_executable(${name} ${sources})
-    target_link_libraries(${name} oxmel)
-    target_include_directories(${name} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    set(binary_name ${CMAKE_PROJECT_NAME}_example_${name})
+    add_executable(${binary_name} ${sources})
+    target_link_libraries(${binary_name} ${CMAKE_PROJECT_NAME})
+    target_include_directories(${binary_name} PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
-    install(TARGETS ${name}
+    install(TARGETS ${binary_name}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)

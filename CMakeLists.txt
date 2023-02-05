@@ -1,7 +1,13 @@
-cmake_minimum_required(VERSION 3.23)
-project(event_loop)
+cmake_minimum_required(VERSION 3.19)
+project(oxmel)
+
+option(OXMEL_BUILD_EXAMPLE "Additionally build examples" OFF)
+option(OXMEL_BUILD_TESTS "Additionally build unit tests" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(src)
-add_subdirectory(example)
+
+if (OXMEL_BUILD_EXAMPLE)
+    add_subdirectory(example)
+endif()

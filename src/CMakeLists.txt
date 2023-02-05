@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.23)
-project(oxmel)
-
-set(CMAKE_CXX_STANDARD 20)
-
 set(SOURCES
     event_loop.cpp
     event_loop_context.cpp
@@ -17,10 +12,10 @@ set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event_loop.h
 )
 
-add_library(oxmel STATIC ${SOURCES})
+add_library(${CMAKE_PROJECT_NAME} STATIC ${SOURCES})
 target_include_directories(oxmel PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
-install(TARGETS oxmel
+install(TARGETS ${CMAKE_PROJECT_NAME}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib)
