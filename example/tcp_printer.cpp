@@ -22,7 +22,7 @@ void PrintErrorMessage(oxm::Event::Mask mask) {
 }
 
 struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
-  explicit TcpConnection(EventLoopPtr loop, int socket) : loop_{std::move(loop)}, socket_{socket} {
+  TcpConnection(EventLoopPtr loop, int socket) : loop_{std::move(loop)}, socket_{socket} {
     oxm::Event event;
     event.fd = socket_;
     event.TriggerOn(oxm::Event::Read);
@@ -77,16 +77,16 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
   oxm::Event::Id event_id_;
   EventLoopPtr loop_;
 
-  std::array<char, 4096> buffer = {};
+  std::array<char, 1024> buffer = {};
 };
 
 struct TcpAcceptor : std::enable_shared_from_this<TcpAcceptor> {
-  explicit TcpAcceptor(EventLoopPtr loop, int listen_socket)
+  TcpAcceptor(EventLoopPtr loop, int listen_socket)
       : loop_{std::move(loop)}, socket_{listen_socket} {
-    oxm::Event accept_event;
-    accept_event.TriggerOn(oxm::Event::Read);
-    accept_event.fd = socket_;
-    event_id_ = loop_->RegisterEvent(accept_event);
+    oxm::Event event;
+    event.fd = socket_;
+    event.TriggerOn(oxm::Event::Read);
+    event_id_ = loop_->RegisterEvent(event);
   }
 
   void AcceptAsync() {
