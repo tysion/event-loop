@@ -61,7 +61,7 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
   }
 
   void OnRead() {
-    auto len = read(socket_, buffer.data(), 4096);
+    auto len = read(socket_, buffer.data(), buffer.size());
     if (len > 0) {
       printf("[%d]: %s", socket_, buffer.data());
     }
