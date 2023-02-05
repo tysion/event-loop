@@ -9,7 +9,7 @@ struct Event {
   using Id = size_t;
   using Mask = uint32_t;
 
-  enum Type : uint32_t {
+  enum class Type : uint32_t {
     None = 0,
     Read = 1 << 0,
     Write = 1 << 1,
@@ -18,23 +18,32 @@ struct Event {
   };
 
   void TriggerOn(Type type) {
-    mask |= type;
+    mask |= static_cast<Mask>(type);
   }
 
   int fd = -1;
-  Mask mask = None;
+  Mask mask = static_cast<Mask>(Type::None);
 };
 
+inline bool Has(Event::Mask mask, Event::Type type) {
+  return mask & static_cast<Event::Mask>(type);
+}
+
+inline void Set(Event::Mask& mask, Event::Type type) {
+  mask |= static_cast<Event::Mask>(type);
+}
+
 inline bool HasError(Event::Mask mask) {
-  return mask & oxm::Event::RemoteConnectionClosed || mask & oxm::Event::FileDescriptorError;
+  return Has(mask, Event::Type::RemoteConnectionClosed) ||
+         Has(mask, Event::Type::FileDescriptorError);
 }
 
 inline bool CanRead(Event::Mask mask) {
-  return mask & oxm::Event::Read;
+  return Has(mask, oxm::Event::Type::Read);
 }
 
 inline bool CanWrite(Event::Mask mask) {
-  return mask & oxm::Event::Write;
+  return Has(mask, oxm::Event::Type::Write);
 }
 
 }  // namespace oxm

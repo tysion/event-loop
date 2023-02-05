@@ -12,9 +12,9 @@ using TcpAcceptorPtr = std::shared_ptr<TcpAcceptor>;
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 
 void PrintErrorMessage(oxm::Event::Mask mask) {
-  if (mask & oxm::Event::RemoteConnectionClosed) {
+  if (oxm::Has(mask,oxm::Event::Type::RemoteConnectionClosed)) {
     printf("Error: Remote connection was closed");
-  } else if (mask & oxm::Event::FileDescriptorError) {
+  } else if (oxm::Has(mask, oxm::Event::Type::FileDescriptorError)) {
     printf("Error: EPOLL: File descriptor error");
   } else {
     printf("Error: Unknown error");
@@ -25,7 +25,7 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
   TcpConnection(EventLoopPtr loop, int socket) : loop_{std::move(loop)}, socket_{socket} {
     oxm::Event event;
     event.fd = socket_;
-    event.TriggerOn(oxm::Event::Read);
+    event.TriggerOn(oxm::Event::Type::Read);
     event_id_ = loop_->RegisterEvent(event);
 
     CleanBuffer();
@@ -85,7 +85,7 @@ struct TcpAcceptor : std::enable_shared_from_this<TcpAcceptor> {
       : loop_{std::move(loop)}, socket_{listen_socket} {
     oxm::Event event;
     event.fd = socket_;
-    event.TriggerOn(oxm::Event::Read);
+    event.TriggerOn(oxm::Event::Type::Read);
     event_id_ = loop_->RegisterEvent(event);
   }
 
