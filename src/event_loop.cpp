@@ -28,6 +28,10 @@ void EventLoop::Schedule(Event::Id id) {
   return ctx_->Schedule(id);
 }
 
+void EventLoop::Unshedule(Event::Id id, bool forever) {
+  ctx_->Unshedule(id, forever);
+}
+
 void EventLoop::Bind(Event::Id id, TaskPtr task) {
   ctx_->Bind(id, std::move(task));
 }

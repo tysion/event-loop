@@ -26,6 +26,8 @@ struct EventLoop {
 
   void Schedule(Event::Id id);
 
+  void Unshedule(Event::Id id, bool forever);
+
   void Bind(Event::Id id, TaskPtr task);
 
   /**

@@ -73,13 +73,9 @@ int main() {
     auto eventId = eventloop->RegisterEvent(event);
 
     auto task2 = eventloop->CreateTask([eventloop, conn_sock, eventId](oxm::Event::Mask mask) {
-      if (mask == oxm::Event::None) {
-        perror("[ERROR:9] None");
-        return;
-      }
-
       if (oxm::HasError(mask)) {
         perror("[ERROR:9] Error");
+        eventloop->Unshedule(eventId, true);
         return;
       }
 
@@ -89,15 +85,11 @@ int main() {
         if (len > 0) {
           write(1, buffer, len);
         }
-
-        eventloop->Schedule(eventId);
       }
     });
 
     eventloop->Bind(eventId, task2);
     eventloop->Schedule(eventId);
-
-    eventloop->Schedule(listenEventId);
   });
 
   eventloop->Bind(listenEventId, task1);

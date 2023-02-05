@@ -38,6 +38,8 @@ int main() {
     if (oxm::CanWrite(mask)) {
       auto _ = write(kStdOut, buf.data(), n);
     }
+
+    loop->Unshedule(print_input, false);
   });
 
   oxm::TaskPtr print_error_task = loop->CreateTask([&](oxm::Event::Mask mask) {
@@ -48,6 +50,8 @@ int main() {
     if (oxm::CanWrite(mask)) {
       auto _ = write(kStdErr, "error happened", 15);
     }
+
+    loop->Unshedule(print_error, false);
   });
 
   oxm::TaskPtr read_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {
@@ -64,8 +68,6 @@ int main() {
 
       loop->Schedule(print_input);
     }
-
-    loop->Schedule(read_input);
   });
 
   loop->Bind(read_input, read_input_task);

@@ -19,6 +19,8 @@ struct EventLoopContext {
 
   void Schedule(Event::Id id);
 
+  void Unshedule(Event::Id id, bool forever);
+
   void Bind(Event::Id id, TaskPtr task);
 
   void Poll(int timeout = -1);
@@ -26,7 +28,7 @@ struct EventLoopContext {
  private:
   std::unique_ptr<IEventNotificator> notificator_;
   EventIds ready_event_ids_;
-  std::vector<std::pair<Event, TaskPtr>> bound_events_;
+  std::vector<std::pair<Event, TaskPtr>> event_binds_;
 };
 
 }  // namespace oxm
