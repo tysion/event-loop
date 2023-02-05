@@ -11,3 +11,7 @@ add_subdirectory(src)
 if (OXMEL_BUILD_EXAMPLE)
     add_subdirectory(example)
 endif()
+
+if (OXMEL_BUILD_TESTS)
+    add_subdirectory(test)
+endif()

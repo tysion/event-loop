@@ -10,7 +10,6 @@ struct Event {
   using Mask = uint32_t;
 
   enum class Type : uint32_t {
-    None = 0,
     Read = 1 << 0,
     Write = 1 << 1,
     FileDescriptorError = 1 << 2,
@@ -22,7 +21,7 @@ struct Event {
   }
 
   int fd = -1;
-  Mask mask = static_cast<Mask>(Type::None);
+  Mask mask = 0;
 };
 
 inline bool Has(Event::Mask mask, Event::Type type) {
