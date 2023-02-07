@@ -10,8 +10,8 @@ namespace oxm {
 
 struct EventLoopContext {
   explicit EventLoopContext(std::unique_ptr<IEventNotificator> notificator)
-      : notificator_{std::move(notificator)}
-  {}
+      : notificator_{std::move(notificator)} {
+  }
 
   TaskPtr CreateTask(Callback&& callback);
 
@@ -26,6 +26,8 @@ struct EventLoopContext {
   void Poll(int timeout = -1);
 
  private:
+  std::pair<Event, TaskPtr>& GetEventBindById(oxm::Event::Id id);
+
   std::unique_ptr<IEventNotificator> notificator_;
   EventIds ready_event_ids_;
   std::vector<std::pair<Event, TaskPtr>> event_binds_;
