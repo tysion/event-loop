@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <oxm/event_loop.h>
+#include <unistd.h>
 
 #include <utility>
 
@@ -12,7 +13,7 @@ using TcpAcceptorPtr = std::shared_ptr<TcpAcceptor>;
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 
 void PrintErrorMessage(oxm::Event::Mask mask) {
-  if (oxm::Has(mask,oxm::Event::Type::RemoteConnectionClosed)) {
+  if (oxm::Has(mask, oxm::Event::Type::RemoteConnectionClosed)) {
     printf("Error: Remote connection was closed");
   } else if (oxm::Has(mask, oxm::Event::Type::FileDescriptorError)) {
     printf("Error: EPOLL: File descriptor error");
