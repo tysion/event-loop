@@ -4,21 +4,6 @@
 
 namespace oxm {
 
-namespace {
-
-void ClearBit(oxm::Event::Mask& mask, oxm::Event::Type event_type) {
-  mask &= ~(1 << (static_cast<uint32_t>(event_type) - 1));
-}
-
-bool CheckMask(oxm::Event::Mask mask) {
-  ClearBit(mask, oxm::Event::Type::Read);
-  ClearBit(mask, oxm::Event::Type::Write);
-  ClearBit(mask, oxm::Event::Type::FileDescriptorError);
-  ClearBit(mask, oxm::Event::Type::RemoteConnectionClosed);
-  return mask == 0;
-}
-}  // namespace
-
 TaskPtr EventLoopContext::CreateTask(Callback&& callback) {
   return std::make_shared<Task>(std::move(callback));
 }
@@ -40,7 +25,7 @@ Event::Id EventLoopContext::RegisterEvent(Event event) {
     throw std::invalid_argument("invalid file descriptor");
   }
 
-  if (!CheckMask(event.mask)) {
+  if (!event.mask.IsValid()) {
     throw std::invalid_argument("invalid mask");
   }
 

@@ -1,8 +1,8 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <oxm/event_loop.h>
-#include <unistd.h>
 
+#include <iostream>
 #include <utility>
 
 struct TcpAcceptor;
@@ -13,9 +13,9 @@ using TcpAcceptorPtr = std::shared_ptr<TcpAcceptor>;
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 
 void PrintErrorMessage(oxm::Event::Mask mask) {
-  if (oxm::Has(mask, oxm::Event::Type::RemoteConnectionClosed)) {
+  if (mask.Has(oxm::Event::Type::RemoteConnectionClosed)) {
     printf("Error: Remote connection was closed");
-  } else if (oxm::Has(mask, oxm::Event::Type::FileDescriptorError)) {
+  } else if (mask.Has(oxm::Event::Type::FileDescriptorError)) {
     printf("Error: EPOLL: File descriptor error");
   } else {
     printf("Error: Unknown error");
@@ -26,7 +26,7 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
   TcpConnection(EventLoopPtr loop, int socket) : loop_{std::move(loop)}, socket_{socket} {
     oxm::Event event;
     event.fd = socket_;
-    event.TriggerOn(oxm::Event::Type::Read);
+    event.mask.Set(oxm::Event::Type::Read);
     event_id_ = loop_->RegisterEvent(event);
 
     CleanBuffer();
@@ -41,12 +41,12 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
 
   void HandleAsync() {
     oxm::TaskPtr on_connect = loop_->CreateTask([self = shared_from_this()](oxm::Event::Mask mask) {
-      if (oxm::HasError(mask)) {
+      if (mask.HasError()) {
         self->OnError(mask);
         return;
       }
 
-      if (oxm::CanRead(mask)) {
+      if (mask.CanRead()) {
         self->OnRead();
       }
     });
@@ -86,13 +86,13 @@ struct TcpAcceptor : std::enable_shared_from_this<TcpAcceptor> {
       : loop_{std::move(loop)}, socket_{listen_socket} {
     oxm::Event event;
     event.fd = socket_;
-    event.TriggerOn(oxm::Event::Type::Read);
+    event.mask.Set(oxm::Event::Type::Read);
     event_id_ = loop_->RegisterEvent(event);
   }
 
   void AcceptAsync() {
     oxm::TaskPtr on_accept = loop_->CreateTask([self = shared_from_this()](oxm::Event::Mask mask) {
-      if (oxm::HasError(mask)) {
+      if (mask.HasError()) {
         self->OnError(mask);
         return;
       }
