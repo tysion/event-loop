@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <oxm/event_loop.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <utility>
@@ -27,6 +28,7 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
     oxm::Event event;
     event.fd = socket_;
     event.mask.Set(oxm::Event::Type::Read);
+    event.mask.Set(oxm::Event::Type::Write);
     event_id_ = loop_->RegisterEvent(event);
 
     CleanBuffer();
@@ -49,6 +51,10 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
       if (mask.CanRead()) {
         self->OnRead();
       }
+
+      if (mask.CanWrite()) {
+        self->OnWrite();
+      }
     });
 
     loop_->Bind(event_id_, on_connect);
@@ -62,11 +68,28 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
   }
 
   void OnRead() {
-    auto len = read(socket_, buffer.data(), buffer.size());
-    if (len > 0) {
-      printf("[%d]: %s", socket_, buffer.data());
+    if (hasRead) {
+      return;
     }
 
+    auto len = read(socket_, buffer.data(), buffer.size());
+    if (len > 0) {
+      hasRead = true;
+      printf("[%d]: %s", socket_, buffer.data());
+    }
+  }
+
+  void OnWrite() {
+    if (!hasRead) {
+      return;
+    }
+
+    auto len = write(socket_, buffer.data(), buffer.size());
+    if (len < 0) {
+      throw std::runtime_error("OnWrite");
+    }
+
+    hasRead = false;
     CleanBuffer();
   }
 
@@ -77,6 +100,7 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
   const int socket_;
   oxm::Event::Id event_id_;
   EventLoopPtr loop_;
+  bool hasRead = false;
 
   std::array<char, 1024> buffer = {};
 };

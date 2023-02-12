@@ -11,4 +11,4 @@ macro(add_example name sources)
 endmacro()
 
 add_example(simple simple.cpp)
-add_example(tcp_printer tcp_printer.cpp)
+add_example(tcp_echo_server tcp_echo_server.cpp)
