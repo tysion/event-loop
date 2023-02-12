@@ -17,11 +17,11 @@ struct Event {
 
   struct Mask {
     void Set(Type type) {
-      bits |= static_cast<typeof(Mask::bits)>(type);
+      bits |= static_cast<decltype(Mask::bits)>(type);
     }
 
     bool Has(Type type) {
-      return bits & static_cast<typeof(Mask::bits)>(type);
+      return bits & static_cast<decltype(Mask::bits)>(type);
     }
 
     bool HasError() {

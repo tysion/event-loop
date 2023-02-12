@@ -48,11 +48,11 @@ TEST_CASE("Handling of invalid input", kTag) {
     REQUIRE_THROWS_AS(ctx->RegisterEvent(event), std::invalid_argument);
   }
 
-//  SECTION("Throws an exception when trying to register an event with invalid mask") {
-//    event.fd = 0;
-//    event.mask.bits = 42;
-//    REQUIRE_THROWS_AS(ctx->RegisterEvent(event), std::invalid_argument);
-//  }
+  SECTION("Throws an exception when trying to register an event with invalid mask") {
+    event.fd = 0;
+    event.mask.bits = 42;
+    REQUIRE_THROWS_AS(ctx->RegisterEvent(event), std::invalid_argument);
+  }
 
   SECTION("Throws an exception when trying to bind nullptr task") {
     event.fd = 0;
