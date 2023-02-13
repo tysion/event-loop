@@ -12,3 +12,8 @@ target_include_directories(${CMAKE_PROJECT_NAME}_test
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/src)
 
+install(TARGETS ${CMAKE_PROJECT_NAME}_test
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)

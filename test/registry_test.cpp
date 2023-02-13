@@ -7,7 +7,7 @@ TEST_CASE("Testing registry API", kTag) {
   oxm::Registry registry;
   oxm::Event event;
   event.fd = 0;
-  event.TriggerOn(oxm::Event::Type::Read);
+  event.mask.Set(oxm::Event::Type::Read);
   oxm::Event::Id id = registry.Add(event);
 
   SECTION("Event ids increase sequentially as elements are added") {
@@ -36,14 +36,14 @@ TEST_CASE("Testing registry API", kTag) {
     auto it = *opt;
     REQUIRE(it->first == id);
     REQUIRE(it->second.event.fd == event.fd);
-    REQUIRE(it->second.event.mask == static_cast<uint32_t>(oxm::Event::Type::Read));
+    REQUIRE(it->second.event.mask.bits == static_cast<uint32_t>(oxm::Event::Type::Read));
   }
 
   SECTION("Extracts correct reference to event binding from valid iterator") {
     auto& binding = oxm::Registry::ExtractEventBinding(*registry.Find(id));
 
     REQUIRE(binding.event.fd == event.fd);
-    REQUIRE(binding.event.mask == static_cast<uint32_t>(oxm::Event::Type::Read));
+    REQUIRE(binding.event.mask.bits == static_cast<uint32_t>(oxm::Event::Type::Read));
   }
 
   SECTION("Extracts actual reference to event binding from valid iterator") {
@@ -53,7 +53,7 @@ TEST_CASE("Testing registry API", kTag) {
 
     REQUIRE(binding_2.event.fd == 24);
     REQUIRE(binding_1.event.fd == binding_2.event.fd);
-    REQUIRE(binding_1.event.mask == binding_2.event.mask);
+    REQUIRE(binding_1.event.mask.bits == binding_2.event.mask.bits);
   }
 
   SECTION("Binds a task to the chosen event") {

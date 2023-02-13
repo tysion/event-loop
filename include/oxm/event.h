@@ -7,7 +7,6 @@ namespace oxm {
 
 struct Event {
   using Id = size_t;
-  using Mask = uint32_t;
 
   enum class Type : uint32_t {
     Read = 1 << 0,
@@ -16,33 +15,37 @@ struct Event {
     RemoteConnectionClosed = 1 << 3
   };
 
-  void TriggerOn(Type type) {
-    mask |= static_cast<Mask>(type);
-  }
+  struct Mask {
+    void Set(Type type) {
+      bits |= static_cast<decltype(Mask::bits)>(type);
+    }
+
+    bool Has(Type type) {
+      return bits & static_cast<decltype(Mask::bits)>(type);
+    }
+
+    bool HasError() {
+      return Has(Type::FileDescriptorError) ||
+             Has(Type::RemoteConnectionClosed);
+    }
+
+    bool CanRead() {
+      return Has(Type::Read);
+    }
+
+    bool CanWrite() {
+      return Has(Type::Write);
+    }
+
+    bool IsValid() {
+      return true;
+    }
+
+    uint32_t bits = 0;
+  };
 
   int fd = -1;
-  Mask mask = 0;
+  Mask mask = {};
 };
-
-inline bool Has(Event::Mask mask, Event::Type type) {
-  return mask & static_cast<Event::Mask>(type);
-}
-
-inline void Set(Event::Mask& mask, Event::Type type) {
-  mask |= static_cast<Event::Mask>(type);
-}
-
-inline bool HasError(Event::Mask mask) {
-  return Has(mask, Event::Type::RemoteConnectionClosed) ||
-         Has(mask, Event::Type::FileDescriptorError);
-}
-
-inline bool CanRead(Event::Mask mask) {
-  return Has(mask, oxm::Event::Type::Read);
-}
-
-inline bool CanWrite(Event::Mask mask) {
-  return Has(mask, oxm::Event::Type::Write);
-}
 
 }  // namespace oxm

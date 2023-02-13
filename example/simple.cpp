@@ -12,16 +12,16 @@ int main() {
 
   oxm::Event print_input_event;
   print_input_event.fd = kStdOut;
-  print_input_event.TriggerOn(oxm::Event::Type::Write);
+  print_input_event.mask.Set(oxm::Event::Type::Write);
 
   oxm::Event print_error_event;
   print_error_event.fd = kStdErr;
-  print_error_event.TriggerOn(oxm::Event::Type::Write);
+  print_error_event.mask.Set(oxm::Event::Type::Write);
 
   oxm::Event read_input_event;
   read_input_event.fd = kStdIn;
-  read_input_event.TriggerOn(oxm::Event::Type::Read);
-  read_input_event.TriggerOn(oxm::Event::Type::Write);
+  read_input_event.mask.Set(oxm::Event::Type::Read);
+  read_input_event.mask.Set(oxm::Event::Type::Write);
 
   const oxm::Event::Id print_input = loop->RegisterEvent(print_input_event);
   const oxm::Event::Id print_error = loop->RegisterEvent(print_error_event);
@@ -31,11 +31,11 @@ int main() {
   size_t n = 0;
 
   oxm::TaskPtr print_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {
-    if (oxm::HasError(mask)) {
+    if (mask.HasError()) {
       loop->Schedule(print_error);
     }
 
-    if (oxm::CanWrite(mask)) {
+    if (mask.CanWrite()) {
       auto _ = write(kStdOut, buf.data(), n);
     }
 
@@ -43,11 +43,11 @@ int main() {
   });
 
   oxm::TaskPtr print_error_task = loop->CreateTask([&](oxm::Event::Mask mask) {
-    if (oxm::HasError(mask)) {
+    if (mask.HasError()) {
       throw std::runtime_error("internal error");
     }
 
-    if (oxm::CanWrite(mask)) {
+    if (mask.CanWrite()) {
       auto _ = write(kStdErr, "error happened", 15);
     }
 
@@ -55,14 +55,14 @@ int main() {
   });
 
   oxm::TaskPtr read_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {
-    if (oxm::HasError(mask)) {
+    if (mask.HasError()) {
       loop->Schedule(print_error);
     }
 
-    if (oxm::CanRead(mask)) {
+    if (mask.CanRead()) {
       n = read(kStdIn, buf.data(), buf.size());
 
-      if (oxm::CanWrite(mask)) {
+      if (mask.CanWrite()) {
         auto _ = write(kStdIn, "> ", 2);
       }
 
