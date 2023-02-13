@@ -47,7 +47,7 @@ TEST_CASE("Interface", kTag) {
     buddy->Deallocate(ptr_32_0);
   }
 
-  SECTION("Sequence -32 -64 -32") {
+  SECTION("Sequence +32 +64 +32") {
     void* ptr_32_0 = buddy->Allocate(32);
     REQUIRE(ptr_32_0 != nullptr);
 
@@ -60,5 +60,25 @@ TEST_CASE("Interface", kTag) {
     REQUIRE(CalculateDistance(ptr_32_0, ptr_64_0) == 64);
     REQUIRE(CalculateDistance(ptr_32_1, ptr_64_0) == 32);
     REQUIRE(CalculateDistance(ptr_32_0, ptr_32_1) == 32);
+  }
+
+  SECTION("Sequence +64 +32 +32 -64 +32") {
+    void* ptr_64_0 = buddy->Allocate(64);
+    REQUIRE(ptr_64_0 != nullptr);
+
+    void* ptr_32_0 = buddy->Allocate(32);
+    REQUIRE(ptr_32_0 != nullptr);
+
+    void* ptr_32_1 = buddy->Allocate(32);
+    REQUIRE(ptr_32_1 != nullptr);
+
+    buddy->Deallocate(ptr_64_0);
+
+    void* ptr_32_2 = buddy->Allocate(32);
+    REQUIRE(ptr_32_2 != nullptr);
+
+    REQUIRE(CalculateDistance(ptr_32_2, ptr_64_0) == 0);
+    REQUIRE(CalculateDistance(ptr_32_2, ptr_32_0) == 64);
+    REQUIRE(CalculateDistance(ptr_32_2, ptr_32_1) == 96);
   }
 }

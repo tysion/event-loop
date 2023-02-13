@@ -70,17 +70,19 @@ BuddyAllocator::~BuddyAllocator() {
   }
 }
 
-void BuddyAllocator::Init() {
+bool BuddyAllocator::Init() {
   if (data_ == nullptr) {
     void* ptr = parent_->Allocate(block_count_ + data_size_);
     if (ptr == nullptr) {
-      throw std::bad_alloc();
+      return false;
     }
 
     data_ = static_cast<uint8_t*>(ptr);
     statuses_ = reinterpret_cast<BlockStatus*>(data_ + data_size_);
     std::fill_n(statuses_, block_count_, BlockStatus::Free);
   }
+
+  return true;
 }
 
 uint32_t BuddyAllocator::GetParentIndex(uint32_t index) const {
@@ -126,7 +128,9 @@ void* BuddyAllocator::Allocate(uint32_t num_bytes) {
   }
 
   // does nothing if already allocated
-  Init();
+  if (!Init()) {
+    return nullptr;
+  }
 
   // can't allocate less than min_block_size_ number of bytes
   // can't allocate non-power of two number of bytes

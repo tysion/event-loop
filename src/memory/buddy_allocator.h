@@ -32,11 +32,7 @@ struct BuddyAllocator final : IAllocator {
     return level_count_;
   }
 
-  const BlockStatus* GetBlockStatuses() const {
-    return statuses_;
-  }
-
-  void Init();
+  bool Init();
 
  private:
   uint32_t GetParentIndex(uint32_t index) const;
