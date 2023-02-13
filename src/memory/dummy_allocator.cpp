@@ -12,4 +12,4 @@ void DummyAllocator::Deallocate(void* ptr) {
   return std::free(ptr);
 }
 
-}
+}  // namespace oxm

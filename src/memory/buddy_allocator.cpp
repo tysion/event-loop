@@ -59,39 +59,46 @@ BuddyAllocator::BuddyAllocator(IAllocator* parent, uint32_t blob_size, uint32_t 
     : parent_{parent},
       data_size_{RoundUp(blob_size)},
       min_block_size_{RoundUp(min_block_size)},
-      tree_depth_{CalculateNumberOfLevels(data_size_, min_block_size_)},
-      blocks_count_{CalculateNumberOfBlocks(tree_depth_)} {
+      level_count_{CalculateNumberOfLevels(data_size_, min_block_size_)},
+      block_count_{CalculateNumberOfBlocks(level_count_)} {
   assert(parent_);
 }
 
 BuddyAllocator::~BuddyAllocator() {
-  parent_->Deallocate(data_);
+  if (data_) {
+    parent_->Deallocate(data_);
+  }
 }
 
 void BuddyAllocator::Init() {
   if (data_ == nullptr) {
-    data_ = static_cast<uint8_t*>(parent_->Allocate(blocks_count_ + data_size_));
-    header_ = reinterpret_cast<BlockStatus*>(data_ + data_size_);
-    std::fill_n(header_, blocks_count_, BlockStatus::Free);
+    void* ptr = parent_->Allocate(block_count_ + data_size_);
+    if (ptr == nullptr) {
+      throw std::bad_alloc();
+    }
+
+    data_ = static_cast<uint8_t*>(ptr);
+    statuses_ = reinterpret_cast<BlockStatus*>(data_ + data_size_);
+    std::fill_n(statuses_, block_count_, BlockStatus::Free);
   }
 }
 
 uint32_t BuddyAllocator::GetParentIndex(uint32_t index) const {
   assert(index > 0);
-  assert(index < blocks_count_);
+  assert(index < block_count_);
   return (index - 1) / 2;
 }
 
 uint32_t BuddyAllocator::GetBuddyIndex(uint32_t index) const {
   assert(index > 0);
-  assert(index < blocks_count_);
+  assert(index < block_count_);
   return index % 2 == 0 ? index - 1 : index + 1;
 }
 
 std::optional<uint32_t> BuddyAllocator::FindFreeBlock(uint32_t beg, uint32_t end) const {
   // TODO: optimize linear scan with avx2 instructions
   for (uint32_t index = beg; index < end; ++index) {
-    if (header_[index] == BlockStatus::Free) {
+    if (statuses_[index] == BlockStatus::Free) {
       return index;
     }
   }
@@ -103,17 +110,15 @@ void BuddyAllocator::TraverseAndMark(uint32_t block_index, uint32_t level_index,
                                      BlockStatus status) {
   uint32_t num_blocks = 1;
 
-  ++level_index;
-  while (level_index < tree_depth_) {
+  do {
+    ++level_index;
     // go to the left child index
     block_index = block_index * 2 + 1;
     // num children increase in 2 times with each level
     num_blocks *= 2;
     // set all children status to given
-    std::fill_n(header_ + block_index, num_blocks, status);
-
-    ++level_index;
-  }
+    std::fill_n(statuses_ + block_index, num_blocks, status);
+  } while (level_index < level_count_);
 }
 
 void* BuddyAllocator::Allocate(uint32_t num_bytes) {
@@ -141,20 +146,20 @@ void* BuddyAllocator::Allocate(uint32_t num_bytes) {
   }
 
   const auto block_index = *index_opt;
-  header_[block_index] = BlockStatus::Allocated;
 
   // traverse subtree starting from the index node and mark all child nodes as used
   TraverseAndMark(block_index, level_index, BlockStatus::Used);
 
   // go up to the root marking all parent nodes as split
-  for (auto index = GetParentIndex(block_index); index > 0; index = GetParentIndex(index)) {
+  for (auto index = block_index; index > 0; index = GetParentIndex(index)) {
     // early stopping
-    if (header_[index] == BlockStatus::Split) {
+    if (statuses_[index] == BlockStatus::Split) {
       break;
     }
-    header_[index] = BlockStatus::Split;
+    statuses_[index] = BlockStatus::Split;
   }
-  header_[0] = BlockStatus::Split;
+  statuses_[0] = BlockStatus::Split;
+  statuses_[block_index] = BlockStatus::Allocated;
 
   return data_ + (block_index - level_beg) * num_bytes;
 }
@@ -162,22 +167,22 @@ void* BuddyAllocator::Allocate(uint32_t num_bytes) {
 void BuddyAllocator::Deallocate(void* ptr) {
   const auto offset = static_cast<uint8_t*>(ptr) - data_;
   const auto blocks_offset = offset / min_block_size_;
-  const auto level_beg = CalculateNumberOfBlocks(tree_depth_ - 1);
+  const auto level_beg = CalculateNumberOfBlocks(level_count_ - 1);
 
   // find allocated block
   auto block_index = level_beg + blocks_offset;
-  auto level_index = tree_depth_ - 1;
-  while (header_[block_index] != BlockStatus::Allocated) {
+  auto level_index = level_count_ - 1;
+  while (statuses_[block_index] != BlockStatus::Allocated) {
     block_index = GetParentIndex(block_index);
     --level_index;
   }
 
   // go up to the root coalescing with buddy if it is also free
   for (auto index = block_index; index > 0; index = GetParentIndex(index)) {
-    header_[index] = BlockStatus::Free;
+    statuses_[index] = BlockStatus::Free;
 
     const auto buddy_index = GetBuddyIndex(index);
-    if (header_[buddy_index] != BlockStatus::Free) {
+    if (statuses_[buddy_index] != BlockStatus::Free) {
       break;
     }
   }

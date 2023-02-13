@@ -24,9 +24,21 @@ struct BuddyAllocator final : IAllocator {
 
   void Deallocate(void* ptr) final;
 
- private:
+  uint32_t GetBlockCount() const {
+    return block_count_;
+  }
+
+  uint32_t GetLevelCount() const {
+    return level_count_;
+  }
+
+  const BlockStatus* GetBlockStatuses() const {
+    return statuses_;
+  }
+
   void Init();
 
+ private:
   uint32_t GetParentIndex(uint32_t index) const;
 
   uint32_t GetBuddyIndex(uint32_t index) const;
@@ -38,10 +50,10 @@ struct BuddyAllocator final : IAllocator {
   IAllocator* parent_ = nullptr;
   const uint32_t data_size_;
   const uint32_t min_block_size_;
-  const uint32_t tree_depth_;
-  const uint32_t blocks_count_;
+  const uint32_t level_count_;
+  const uint32_t block_count_;
   uint8_t* data_ = nullptr;
-  BlockStatus* header_ = nullptr;
+  BlockStatus* statuses_ = nullptr;
 };
 
 }
