@@ -110,15 +110,14 @@ void BuddyAllocator::TraverseAndMark(uint32_t block_index, uint32_t level_index,
                                      BlockStatus status) {
   uint32_t num_blocks = 1;
 
-  do {
-    ++level_index;
+  for (level_index += 1; level_index < level_count_; ++level_index) {
     // go to the left child index
     block_index = block_index * 2 + 1;
     // num children increase in 2 times with each level
     num_blocks *= 2;
     // set all children status to given
     std::fill_n(statuses_ + block_index, num_blocks, status);
-  } while (level_index < level_count_);
+  }
 }
 
 void* BuddyAllocator::Allocate(uint32_t num_bytes) {
@@ -162,6 +161,8 @@ void* BuddyAllocator::Allocate(uint32_t num_bytes) {
   statuses_[block_index] = BlockStatus::Allocated;
 
   return data_ + (block_index - level_beg) * num_bytes;
+
+  return nullptr;
 }
 
 void BuddyAllocator::Deallocate(void* ptr) {
