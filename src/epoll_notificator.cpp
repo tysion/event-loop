@@ -7,11 +7,11 @@ namespace oxm {
 uint32_t ToEpollEvent(Event::Mask mask) {
   uint32_t epoll_event = 0;
 
-  if (Has(mask, Event::Type::Read)) {
+  if (mask.Has(Event::Type::Read)) {
     epoll_event |= EPOLLIN;
   }
 
-  if (Has(mask, Event::Type::Write)) {
+  if (mask.Has(Event::Type::Write)) {
     epoll_event |= EPOLLOUT;
   }
 
@@ -19,22 +19,22 @@ uint32_t ToEpollEvent(Event::Mask mask) {
 }
 
 Event::Mask ToEventMask(uint32_t events) {
-  Event::Mask mask = 0;
+  Event::Mask mask = {};
 
   if (events & EPOLLERR) {
-    Set(mask, Event::Type::FileDescriptorError);
+    mask.Set(Event::Type::FileDescriptorError);
   }
 
   if (events & EPOLLHUP) {
-    Set(mask, Event::Type::RemoteConnectionClosed);
+    mask.Set(Event::Type::RemoteConnectionClosed);
   }
 
   if (events & EPOLLIN) {
-    Set(mask, Event::Type::Read);
+    mask.Set(Event::Type::Read);
   }
 
   if (events & EPOLLOUT) {
-    Set(mask, Event::Type::Write);
+    mask.Set(Event::Type::Write);
   }
 
   return mask;
@@ -70,7 +70,7 @@ void EpollNotificator::Modify(int fd, Event::Mask mask) {
 }
 
 void EpollNotificator::Unwatch(int fd) {
-  Control(EPOLL_CTL_DEL, fd, 0, Event::Id{});
+  Control(EPOLL_CTL_DEL, fd, Event::Mask{}, Event::Id{});
   --events_count_;
 }
 
