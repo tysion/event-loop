@@ -165,8 +165,6 @@ void* BuddyAllocator::Allocate(uint32_t num_bytes) {
   statuses_[block_index] = BlockStatus::Allocated;
 
   return data_ + (block_index - level_beg) * num_bytes;
-
-  return nullptr;
 }
 
 void BuddyAllocator::Deallocate(void* ptr) {
