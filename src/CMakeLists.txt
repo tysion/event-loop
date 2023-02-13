@@ -5,7 +5,12 @@ set(SOURCES
     event_notificator_interface.h
     epoll_notificator.cpp
     epoll_notificator.h
-    task.h ../include/oxm/event.h)
+    task.h
+    memory/buddy_allocator.cpp
+    memory/buddy_allocator.h
+    memory/dummy_allocator.cpp
+    memory/dummy_allocator.h
+    memory/allocator_interface.h)
 
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event.h
