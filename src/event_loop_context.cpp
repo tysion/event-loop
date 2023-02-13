@@ -5,7 +5,8 @@
 namespace oxm {
 
 TaskPtr EventLoopContext::CreateTask(Callback&& callback) {
-  return std::make_shared<Task>(std::move(callback));
+  Task* task = allocator_.AllocateTask();
+  return new (task) Task(std::move(callback));
 }
 
 void EventLoopContext::Poll(int timeout) {
@@ -52,7 +53,7 @@ void EventLoopContext::Schedule(Event::Id id) {
 void EventLoopContext::Unshedule(Event::Id id, bool forever) {
   auto& [event, task] = GetEventBindById(id);
   if (forever) {
-    task.reset();
+    allocator_.DeallocateTask(task);
   }
 
   notificator_->Unwatch(event.fd);

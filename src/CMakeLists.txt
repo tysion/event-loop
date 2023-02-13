@@ -10,7 +10,7 @@ set(SOURCES
     memory/buddy_allocator.h
     memory/dummy_allocator.cpp
     memory/dummy_allocator.h
-    memory/allocator_interface.h)
+    memory/allocator_interface.h task_allocator.h)
 
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event.h

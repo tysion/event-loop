@@ -110,16 +110,6 @@ TEST_CASE("Use notifier API properly", kTag) {
     REQUIRE(task_calls_count == 0);
   }
 
-  SECTION("Decrease task pointer reference counter after de-scheduling") {
-      REQUIRE(task.use_count() == 2);
-
-      ctx->Unshedule(id, false);
-      REQUIRE(task.use_count() == 2);
-
-      ctx->Unshedule(id, true);
-      REQUIRE(task.use_count() == 1);
-  }
-
   SECTION("Increments wait calls and execute counter after scheduling") {
     ctx->Schedule(id);
     ctx->Poll();

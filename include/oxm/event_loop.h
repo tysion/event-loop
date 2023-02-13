@@ -10,7 +10,7 @@ namespace oxm {
 struct EventLoopContext;
 struct Task;
 
-using TaskPtr = std::shared_ptr<Task>;
+using TaskPtr = Task*;
 using Callback = std::function<void(Event::Mask)>;
 
 struct EventLoop {
