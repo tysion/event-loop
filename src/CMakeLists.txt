@@ -5,7 +5,9 @@ set(SOURCES
     event_notificator_interface.h
     epoll_notificator.cpp
     epoll_notificator.h
-    task.h ../include/oxm/event.h)
+    task.h
+    registry.cpp
+    registry.h)
 
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event.h
