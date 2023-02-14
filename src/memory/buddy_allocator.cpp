@@ -3,6 +3,8 @@
 #include <cassert>
 #include <tuple>
 
+#include "core/simd_algorithm.h"
+
 namespace oxm {
 
 namespace {
@@ -97,15 +99,14 @@ uint32_t BuddyAllocator::GetBuddyIndex(uint32_t index) const {
   return index % 2 == 0 ? index - 1 : index + 1;
 }
 
-std::optional<uint32_t> BuddyAllocator::FindFreeBlock(uint32_t beg, uint32_t end) const {
-  // TODO: optimize linear scan with avx2 instructions
-  for (uint32_t index = beg; index < end; ++index) {
-    if (statuses_[index] == BlockStatus::Free) {
-      return index;
-    }
+std::optional<uint32_t> BuddyAllocator::FindFreeBlock(uint32_t beg, uint32_t n) const {
+  const auto* data = reinterpret_cast<const uint8_t*>(statuses_) + beg;
+  const auto target = static_cast<uint8_t>(BlockStatus::Free);
+  auto res = FindUint8(data, n, target);
+  if (!res) {
+    return std::nullopt;
   }
-
-  return std::nullopt;
+  return *res + beg;
 }
 
 void BuddyAllocator::TraverseAndMark(uint32_t block_index, uint32_t level_index,
@@ -141,9 +142,8 @@ void* BuddyAllocator::Allocate(uint32_t num_bytes) {
   const auto level_index = CalculateNumberOfLevels(data_size_, num_bytes) - 1;
   // first index == number of nodes in binary tree with level_index depth
   const auto level_beg = CalculateNumberOfBlocks(level_index);
-  const auto level_end = level_beg + CalculateNumberOfBlocksOnLevel(level_index);
-
-  const auto index_opt = FindFreeBlock(level_beg, level_end);
+  const auto num_blocks = CalculateNumberOfBlocksOnLevel(level_index);
+  const auto index_opt = FindFreeBlock(level_beg, num_blocks);
   if (!index_opt.has_value()) {
     return nullptr;
   }

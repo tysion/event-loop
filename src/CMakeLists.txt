@@ -10,7 +10,9 @@ set(SOURCES
     memory/buddy_allocator.h
     memory/dummy_allocator.cpp
     memory/dummy_allocator.h
-    memory/allocator_interface.h task_allocator.h)
+    memory/allocator_interface.h task_allocator.h
+    core/simd_algorithm.cpp
+    core/simd_algorithm.h)
 
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event.h
@@ -18,7 +20,7 @@ set(PUBLIC_HEADERS
 )
 
 add_library(${CMAKE_PROJECT_NAME} STATIC ${SOURCES})
-target_include_directories(oxmel PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(oxmel PRIVATE ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src)
 
 install(TARGETS ${CMAKE_PROJECT_NAME}
     RUNTIME DESTINATION bin

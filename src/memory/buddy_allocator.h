@@ -39,7 +39,7 @@ struct BuddyAllocator final : IAllocator {
 
   uint32_t GetBuddyIndex(uint32_t index) const;
 
-  std::optional<uint32_t> FindFreeBlock(uint32_t beg, uint32_t end) const;
+  std::optional<uint32_t> FindFreeBlock(uint32_t beg, uint32_t n) const;
 
   void TraverseAndMark(uint32_t block_index, uint32_t level_index, BlockStatus status);
 
