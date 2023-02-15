@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "event_notificator_interface.h"
-#include "task.h"
+#include "oxm/task.h"
 #include "task_allocator.h"
 
 namespace oxm {
@@ -14,7 +14,8 @@ struct EventLoopContext {
       : notificator_{std::move(notificator)}, allocator_{32 * 1024} {
   }
 
-  TaskPtr CreateTask(Callback&& callback);
+  Task* AllocateTask(size_t task_size);
+  void DeallocateTask(Task* task);
 
   Event::Id RegisterEvent(Event event);
 
@@ -22,16 +23,16 @@ struct EventLoopContext {
 
   void Unshedule(Event::Id id, bool forever);
 
-  void Bind(Event::Id id, TaskPtr task);
+  void Bind(Event::Id id, Task* task);
 
   void Poll(int timeout = -1);
 
  private:
-  std::pair<Event, TaskPtr>& GetEventBindById(oxm::Event::Id id);
+  std::pair<Event, Task*>& GetEventBindById(oxm::Event::Id id);
 
   std::unique_ptr<IEventNotificator> notificator_;
   EventIds ready_event_ids_;
-  std::vector<std::pair<Event, TaskPtr>> event_binds_;
+  std::vector<std::pair<Event, Task*>> event_binds_;
 
   TaskAllocator allocator_;
 };

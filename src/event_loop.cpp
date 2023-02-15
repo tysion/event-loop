@@ -16,10 +16,6 @@ void EventLoop::Poll(int timeout) {
   ctx_->Poll(timeout);
 }
 
-TaskPtr EventLoop::CreateTask(Callback&& callback) {
-  return ctx_->CreateTask(std::move(callback));
-}
-
 Event::Id EventLoop::RegisterEvent(Event event) {
   return ctx_->RegisterEvent(event);
 }
@@ -32,8 +28,12 @@ void EventLoop::Unshedule(Event::Id id, bool forever) {
   ctx_->Unshedule(id, forever);
 }
 
-void EventLoop::Bind(Event::Id id, TaskPtr task) {
-  ctx_->Bind(id, std::move(task));
+void EventLoop::Bind(Event::Id id, Task* task) {
+  ctx_->Bind(id, task);
+}
+
+Task* EventLoop::AllocateTask(size_t task_size) {
+  return ctx_->AllocateTask(task_size);
 }
 
 EventLoop::~EventLoop() = default;

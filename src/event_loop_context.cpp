@@ -4,10 +4,12 @@
 
 namespace oxm {
 
-TaskPtr EventLoopContext::CreateTask(Callback&& callback) {
-  Task* task = allocator_.AllocateTask();
-  return new (task) Task(std::move(callback));
-//  return new Task(std::move(callback));
+Task* EventLoopContext::AllocateTask(size_t task_size) {
+   return allocator_.Allocate(task_size);
+}
+
+void EventLoopContext::DeallocateTask(Task* task) {
+   allocator_.Deallocate(task);
 }
 
 void EventLoopContext::Poll(int timeout) {
@@ -35,11 +37,11 @@ Event::Id EventLoopContext::RegisterEvent(Event event) {
   return event_binds_.size() - 1;
 }
 
-void EventLoopContext::Bind(Event::Id id, TaskPtr task) {
+void EventLoopContext::Bind(Event::Id id, Task* task) {
   if (task == nullptr) {
     throw std::invalid_argument("unable to bind nullptr");
   }
-  GetEventBindById(id).second = std::move(task);
+  GetEventBindById(id).second = task;
 }
 
 void EventLoopContext::Schedule(Event::Id id) {
@@ -54,14 +56,13 @@ void EventLoopContext::Schedule(Event::Id id) {
 void EventLoopContext::Unshedule(Event::Id id, bool forever) {
   auto& [event, task] = GetEventBindById(id);
   if (forever) {
-    allocator_.DeallocateTask(task);
-//    delete task;
+    DeallocateTask(task);
   }
 
   notificator_->Unwatch(event.fd);
 }
 
-std::pair<Event, TaskPtr>& EventLoopContext::GetEventBindById(oxm::Event::Id id) {
+std::pair<Event, Task*>& EventLoopContext::GetEventBindById(oxm::Event::Id id) {
   if (id >= event_binds_.size()) {
     throw std::invalid_argument("invalid event id");
   }

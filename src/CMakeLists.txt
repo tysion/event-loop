@@ -5,7 +5,6 @@ set(SOURCES
     event_notificator_interface.h
     epoll_notificator.cpp
     epoll_notificator.h
-    task.h
     memory/buddy_allocator.cpp
     memory/buddy_allocator.h
     memory/dummy_allocator.cpp
@@ -17,6 +16,7 @@ set(SOURCES
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event.h
     ${CMAKE_SOURCE_DIR}/include/oxm/event_loop.h
+    ${CMAKE_SOURCE_DIR}/include/oxm/task.h
 )
 
 add_library(${CMAKE_PROJECT_NAME} STATIC ${SOURCES})

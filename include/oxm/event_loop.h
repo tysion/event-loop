@@ -4,14 +4,12 @@
 #include <memory>
 
 #include "event.h"
+#include "task.h"
 
 namespace oxm {
 
 struct EventLoopContext;
 struct Task;
-
-using TaskPtr = Task*;
-using Callback = std::function<void(Event::Mask)>;
 
 struct EventLoop {
   EventLoop();
@@ -20,7 +18,22 @@ struct EventLoop {
   EventLoop(const EventLoop& other) = delete;
   EventLoop& operator=(const EventLoop& other) = delete;
 
-  TaskPtr CreateTask(Callback&& callback);
+  template <typename T>
+  Task* CreateTask(T callback) {
+    struct TaskWrapper final : Task {
+      explicit TaskWrapper(T&& callback) : callback_{std::move(callback)} {
+      }
+
+      void Execute(oxm::Event::Mask mask) final {
+        callback_(mask);
+      }
+
+     private:
+      T callback_;
+    };
+
+    return new (AllocateTask(sizeof(TaskWrapper))) TaskWrapper(std::move(callback));
+  }
 
   Event::Id RegisterEvent(Event event);
 
@@ -28,7 +41,7 @@ struct EventLoop {
 
   void Unshedule(Event::Id id, bool forever);
 
-  void Bind(Event::Id id, TaskPtr task);
+  void Bind(Event::Id id, Task* task);
 
   /**
    * Wait for events and executes callbacks
@@ -37,6 +50,8 @@ struct EventLoop {
   void Poll(int timeout = -1);
 
  private:
+  Task* AllocateTask(size_t task_size);
+
   std::unique_ptr<EventLoopContext> ctx_;
 };
 
