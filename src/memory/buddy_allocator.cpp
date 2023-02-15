@@ -155,10 +155,6 @@ void* BuddyAllocator::Allocate(uint32_t num_bytes) {
 
   // go up to the root marking all parent nodes as split
   for (auto index = block_index; index > 0; index = GetParentIndex(index)) {
-    // early stopping
-    if (statuses_[index] == BlockStatus::Split) {
-      break;
-    }
     statuses_[index] = BlockStatus::Split;
   }
   statuses_[0] = BlockStatus::Split;
