@@ -7,20 +7,21 @@
 namespace oxm {
 
 struct TaskAllocator {
-  static constexpr uint32_t kAlignment = 64;
-  static constexpr uint32_t kMinTaskSize = 32;
+  static constexpr uint32_t kMinTaskSize = 16;
 
-  TaskAllocator(size_t pool_size, IAllocator* parent = nullptr)
+  explicit TaskAllocator(size_t pool_size, IAllocator* parent = nullptr)
       : parent_{parent},
-        dummy_{kAlignment},
-        buddy_(parent ? parent : &dummy_, pool_size, kMinTaskSize) {
+        dummy_{},
+        buddy_(parent_ ? parent_ : &dummy_, pool_size, kMinTaskSize) {
   }
 
   Task* Allocate(size_t task_size) {
+//    return static_cast<Task*>(dummy_.Allocate(task_size));
     return static_cast<Task*>(buddy_.Allocate(task_size));
   }
 
   void Deallocate(Task* task) {
+//    dummy_.Deallocate(task);
     buddy_.Deallocate(task);
   }
 

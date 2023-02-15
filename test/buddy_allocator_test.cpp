@@ -9,7 +9,7 @@ int64_t CalculateDistance(void* first, void* last) {
 }
 
 TEST_CASE("Interface", kTag) {
-  auto dummy = std::make_shared<oxm::DummyAllocator>(64);
+  auto dummy = std::make_shared<oxm::DummyAllocator>();
   auto buddy = std::make_shared<oxm::BuddyAllocator>(dummy.get(), 128, 32);
 
   REQUIRE(buddy->GetBlockCount() == 7);
