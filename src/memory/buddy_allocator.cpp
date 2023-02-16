@@ -158,9 +158,8 @@ void* BuddyAllocator::Allocate(uint32_t num_bytes) {
   if (block_index > 0) {
     auto index = GetParentIndex(block_index);
     while (index > 0) {
-      const auto parent_index = GetParentIndex(index);
       statuses_[index] = BlockStatus::Split;
-      index = parent_index;
+      index = GetParentIndex(index);
     }
     statuses_[0] = BlockStatus::Split;
   }
