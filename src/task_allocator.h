@@ -16,12 +16,10 @@ struct TaskAllocator {
   }
 
   Task* Allocate(size_t task_size) {
-//    return static_cast<Task*>(dummy_.Allocate(task_size));
     return static_cast<Task*>(buddy_.Allocate(task_size));
   }
 
   void Deallocate(Task* task) {
-//    dummy_.Deallocate(task);
     buddy_.Deallocate(task);
   }
 

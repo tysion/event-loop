@@ -1,7 +1,7 @@
 #include "buddy_allocator.h"
 
 #include <cassert>
-#include <tuple>
+#include <immintrin.h>
 
 #include "core/simd_algorithm.h"
 
@@ -154,11 +154,16 @@ void* BuddyAllocator::Allocate(uint32_t num_bytes) {
   TraverseAndMark(block_index, level_index, BlockStatus::Used);
 
   // go up to the root marking all parent nodes as split
-  for (auto index = block_index; index > 0; index = GetParentIndex(index)) {
-    statuses_[index] = BlockStatus::Split;
-  }
-  statuses_[0] = BlockStatus::Split;
   statuses_[block_index] = BlockStatus::Allocated;
+  if (block_index > 0) {
+    auto index = GetParentIndex(block_index);
+    while (index > 0) {
+      const auto parent_index = GetParentIndex(index);
+      statuses_[index] = BlockStatus::Split;
+      index = parent_index;
+    }
+    statuses_[0] = BlockStatus::Split;
+  }
 
   return data_ + (block_index - level_beg) * num_bytes;
 }

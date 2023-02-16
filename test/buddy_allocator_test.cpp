@@ -82,3 +82,19 @@ TEST_CASE("Interface", kTag) {
     REQUIRE(CalculateDistance(ptr_32_2, ptr_32_1) == 96);
   }
 }
+
+TEST_CASE("Sequence +32 ...", kTag) {
+  constexpr uint32_t kMinBlockSize = 16;
+  constexpr uint32_t kBlocksCount = 1000;
+  auto dummy = std::make_shared<oxm::DummyAllocator>();
+  auto buddy = std::make_shared<oxm::BuddyAllocator>(dummy.get(), kMinBlockSize * kBlocksCount,
+                                                     kMinBlockSize);
+
+  auto ref = buddy->Allocate(kMinBlockSize);
+  REQUIRE(ref != nullptr);
+  for (int i = 1; i < kBlocksCount; ++i) {
+    auto ptr = buddy->Allocate(kMinBlockSize);
+    REQUIRE(ptr != nullptr);
+    REQUIRE(CalculateDistance(ref, ptr) == kMinBlockSize * i);
+  }
+}
