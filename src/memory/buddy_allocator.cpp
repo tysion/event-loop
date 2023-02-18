@@ -1,7 +1,6 @@
 #include "buddy_allocator.h"
 
 #include <cassert>
-#include <immintrin.h>
 
 #include "core/simd_algorithm.h"
 
