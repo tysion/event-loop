@@ -181,13 +181,12 @@ void BuddyAllocator::Deallocate(void* ptr) {
   }
 
   // go up to the root coalescing with buddy if it is also free
-  for (auto index = block_index; index > 0; index = GetParentIndex(index)) {
+  auto index = block_index;
+  auto status = statuses_[GetBuddyIndex(index)];
+  while (status == BlockStatus::Free && index > 0) {
     statuses_[index] = BlockStatus::Free;
-
-    const auto buddy_index = GetBuddyIndex(index);
-    if (statuses_[buddy_index] != BlockStatus::Free) {
-      break;
-    }
+    status = statuses_[GetBuddyIndex(index)];
+    index = GetParentIndex(index);
   }
 
   // traverse subtree starting from the index node and mark all child nodes as free
