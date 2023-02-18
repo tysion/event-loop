@@ -32,7 +32,7 @@ int main() {
   std::array<char, 1024> buf = {};
   size_t n = 0;
 
-  oxm::TaskPtr print_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {
+  oxm::Task* print_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {
     if (mask.HasError()) {
       loop->Schedule(print_error);
     }
@@ -44,7 +44,7 @@ int main() {
     loop->Unshedule(print_input, false);
   });
 
-  oxm::TaskPtr print_error_task = loop->CreateTask([&](oxm::Event::Mask mask) {
+  oxm::Task* print_error_task = loop->CreateTask([&](oxm::Event::Mask mask) {
     if (mask.HasError()) {
       throw std::runtime_error("internal error");
     }
@@ -56,7 +56,7 @@ int main() {
     loop->Unshedule(print_error, false);
   });
 
-  oxm::TaskPtr read_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {
+  oxm::Task* read_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {
     if (mask.HasError()) {
       loop->Schedule(print_error);
     }
