@@ -9,8 +9,8 @@ int64_t CalculateDistance(void* first, void* last) {
 }
 
 TEST_CASE("Interface", kTag) {
-  auto dummy = std::make_shared<oxm::DummyAllocator>();
-  auto buddy = std::make_shared<oxm::BuddyAllocator>(dummy.get(), 128, 32);
+  auto dummy = std::make_shared<oxm::AlignedAllocator<64>>();
+  auto buddy = std::make_shared<oxm::AlignedBuddyAllocator<64>>(dummy.get(), 128, 32);
 
   REQUIRE(buddy->GetBlockCount() == 7);
   REQUIRE(buddy->GetLevelCount() == 3);
@@ -86,9 +86,9 @@ TEST_CASE("Interface", kTag) {
 TEST_CASE("Sequence +32 ...", kTag) {
   constexpr uint32_t kMinBlockSize = 16;
   constexpr uint32_t kBlocksCount = 1000;
-  auto dummy = std::make_shared<oxm::DummyAllocator>();
-  auto buddy = std::make_shared<oxm::BuddyAllocator>(dummy.get(), kMinBlockSize * kBlocksCount,
-                                                     kMinBlockSize);
+  auto dummy = std::make_shared<oxm::AlignedAllocator<64>>();
+  auto buddy = std::make_shared<oxm::AlignedBuddyAllocator<64>>(
+      dummy.get(), kMinBlockSize * kBlocksCount, kMinBlockSize);
 
   auto ref = buddy->Allocate(kMinBlockSize);
   REQUIRE(ref != nullptr);

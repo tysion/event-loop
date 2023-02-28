@@ -1,32 +1,29 @@
 #pragma once
 
 #include "memory/buddy_allocator.h"
-#include "memory/dummy_allocator.h"
 #include "oxm/task.h"
 
 namespace oxm {
 
 struct TaskAllocator {
   static constexpr uint32_t kMinTaskSize = 16;
+  static constexpr uint32_t kAlignment = 64;
 
-  explicit TaskAllocator(size_t pool_size, IAllocator* parent = nullptr)
-      : parent_{parent},
-        dummy_{},
-        buddy_(parent_ ? parent_ : &dummy_, pool_size, kMinTaskSize) {
+  explicit TaskAllocator(size_t pool_size)
+      : allocator_(&base_, pool_size, kMinTaskSize) {
   }
 
   Task* Allocate(size_t task_size) {
-    return static_cast<Task*>(buddy_.Allocate(task_size));
+    return static_cast<Task*>(allocator_.Allocate(task_size));
   }
 
   void Deallocate(Task* task) {
-    buddy_.Deallocate(task);
+    allocator_.Deallocate(task);
   }
 
  private:
-  IAllocator* parent_;
-  DummyAllocator dummy_;
-  BuddyAllocator buddy_;
+  AlignedAllocator<kAlignment> base_;
+  AlignedBuddyAllocator<kAlignment> allocator_;
 };
 
 }  // namespace oxm

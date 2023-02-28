@@ -5,11 +5,9 @@ set(SOURCES
     event_notificator_interface.h
     epoll_notificator.cpp
     epoll_notificator.h
-    memory/buddy_allocator.cpp
     memory/buddy_allocator.h
-    memory/dummy_allocator.cpp
-    memory/dummy_allocator.h
-    memory/allocator_interface.h task_allocator.h
+        memory/aligned_allocator.h
+        memory/base_allocator.h task_allocator.h
     core/simd_algorithm.cpp
     core/simd_algorithm.h)
 
