@@ -42,7 +42,7 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
   }
 
   void HandleAsync() {
-    oxm::TaskPtr on_connect = loop_->CreateTask([self = shared_from_this()](oxm::Event::Mask mask) {
+    oxm::Task* on_connect = loop_->CreateTask([self = shared_from_this()](oxm::Event::Mask mask) {
       if (mask.HasError()) {
         self->OnError(mask);
         return;
@@ -64,7 +64,7 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
  private:
   void OnError(oxm::Event::Mask mask) {
     PrintErrorMessage(mask);
-    loop_->Unshedule(event_id_, true);
+    loop_->Unschedule(event_id_, true);
   }
 
   void OnRead() {
@@ -115,7 +115,7 @@ struct TcpAcceptor : std::enable_shared_from_this<TcpAcceptor> {
   }
 
   void AcceptAsync() {
-    oxm::TaskPtr on_accept = loop_->CreateTask([self = shared_from_this()](oxm::Event::Mask mask) {
+    oxm::Task* on_accept = loop_->CreateTask([self = shared_from_this()](oxm::Event::Mask mask) {
       if (mask.HasError()) {
         self->OnError(mask);
         return;
@@ -131,7 +131,7 @@ struct TcpAcceptor : std::enable_shared_from_this<TcpAcceptor> {
  private:
   void OnError(oxm::Event::Mask mask) {
     PrintErrorMessage(mask);
-    loop_->Unshedule(event_id_, true);
+    loop_->Unschedule(event_id_, true);
   }
 
   void OnConnect() const {

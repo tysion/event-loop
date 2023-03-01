@@ -60,21 +60,21 @@ void EpollNotificator::Control(int cmd, int fd, Event::Mask mask, Event::Id id) 
   }
 }
 
-void EpollNotificator::Watch(int fd, Event::Mask mask, Event::Id id) {
+void EpollNotificator::WatchImpl(int fd, Event::Mask mask, Event::Id id) {
   Control(EPOLL_CTL_ADD, fd, mask, id);
   ++events_count_;
 }
 
-void EpollNotificator::Modify(int fd, Event::Mask mask) {
+void EpollNotificator::ModifyImpl(int fd, Event::Mask mask) {
   Control(EPOLL_CTL_MOD, fd, mask, Event::Id{});
 }
 
-void EpollNotificator::Unwatch(int fd) {
+void EpollNotificator::UnwatchImpl(int fd) {
   Control(EPOLL_CTL_DEL, fd, Event::Mask{}, Event::Id{});
   --events_count_;
 }
 
-void EpollNotificator::Wait(int timeout, EventIds* ready_event_ids) {
+void EpollNotificator::WaitImpl(int timeout, EventIds* ready_event_ids) {
   assert(ready_event_ids);
   assert(ready_event_ids->empty());
 

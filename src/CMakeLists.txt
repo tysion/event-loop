@@ -1,19 +1,23 @@
 set(SOURCES
     event_loop.cpp
-    event_loop_context.cpp
     event_loop_context.h
-    event_notificator_interface.h
-    epoll_notificator.cpp
-    epoll_notificator.h
-    task.h)
+    io/base_notificator.h
+    io/linux/epoll_notificator.h
+    io/linux/epoll_notificator.cpp
+    memory/buddy_allocator.h
+    memory/aligned_allocator.h
+    memory/base_allocator.h task_allocator.h
+    core/simd_algorithm.cpp
+    core/simd_algorithm.h io/notificator.h)
 
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event.h
     ${CMAKE_SOURCE_DIR}/include/oxm/event_loop.h
+    ${CMAKE_SOURCE_DIR}/include/oxm/task.h
 )
 
 add_library(${CMAKE_PROJECT_NAME} STATIC ${SOURCES})
-target_include_directories(oxmel PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(oxmel PRIVATE ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src)
 
 install(TARGETS ${CMAKE_PROJECT_NAME}
     RUNTIME DESTINATION bin
