@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "io/base_notificator.h"
+#include "io/notificator.h"
 #include "oxm/task.h"
 #include "task_allocator.h"
 
@@ -11,8 +11,7 @@ namespace oxm {
 
 template <typename TNotificator>
 struct EventLoopContext {
-  explicit EventLoopContext()
-      : notificator_{1024}, allocator_{32 * 1024} {
+  explicit EventLoopContext() : notificator_{1024}, allocator_{32 * 1024} {
   }
 
   Task* AllocateTask(size_t task_size);
@@ -40,6 +39,10 @@ struct EventLoopContext {
   std::vector<std::pair<Event, Task*>> event_binds_;
 
   TaskAllocator allocator_;
+};
+
+struct Context {
+  EventLoopContext<Notificator> impl;
 };
 
 template <typename TNotificator>
