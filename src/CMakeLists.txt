@@ -1,8 +1,7 @@
 set(SOURCES
     event_loop.cpp
-    event_loop_context.cpp
     event_loop_context.h
-        io/base_notificator.h
+    io/base_notificator.h
     io/linux/epoll_notificator.h
     io/linux/epoll_notificator.cpp
     memory/buddy_allocator.h
