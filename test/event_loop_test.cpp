@@ -4,38 +4,44 @@
 
 constexpr const char* kTag = "[oxm::EventLoopContext]";
 
-struct NotifierMock : oxm::IEventNotificator {
-  void Watch(int fd, oxm::Event::Mask mask, oxm::Event::Id id) final {
-    ++watch_calls_counter;
-    events.emplace_back(mask, id);
-  }
-
-  void Modify(int fd, oxm::Event::Mask mask) final {
-    ++modify_calls_counter;
-  }
-
-  void Unwatch(int fd) final {
-    ++unwatch_calls_counter;
-  }
-
-  void Wait(int timeout, oxm::EventIds* ready_event_ids) final {
-    ++wait_calls_counter;
-
-    for (auto event : events) {
-      ready_event_ids->push_back(event);
-    }
-  }
-
+struct NotifierMock : oxm::BaseNotificator<NotifierMock> {
   int watch_calls_counter = 0;
   int modify_calls_counter = 0;
   int unwatch_calls_counter = 0;
   int wait_calls_counter = 0;
 
   oxm::EventIds events;
+
+  NotifierMock(uint32_t num_events) {
+    events.reserve(num_events);
+  }
+
+  void WatchImpl(int fd, oxm::Event::Mask mask, oxm::Event::Id id) {
+    ++watch_calls_counter;
+    events.emplace_back(mask, id);
+  }
+
+  void ModifyImpl(int fd, oxm::Event::Mask mask) {
+    ++modify_calls_counter;
+  }
+
+  void UnwatchImpl(int fd) {
+    ++unwatch_calls_counter;
+  }
+
+  void WaitImpl(int timeout, oxm::EventIds* ready_event_ids) {
+    ++wait_calls_counter;
+
+    for (auto event : events) {
+      ready_event_ids->push_back(event);
+    }
+  }
 };
 
+using EventLoopContextMocked = oxm::EventLoopContext<NotifierMock>;
+
 template <typename T>
-oxm::Task* CreateTask(oxm::EventLoopContext* ctx, T callback) {
+oxm::Task* CreateTask(EventLoopContextMocked* ctx, T callback) {
   struct TaskWrapper final : oxm::Task {
     explicit TaskWrapper(T&& callback) : callback_{std::move(callback)} {
     }
@@ -52,8 +58,7 @@ oxm::Task* CreateTask(oxm::EventLoopContext* ctx, T callback) {
 }
 
 TEST_CASE("Handling of invalid input", kTag) {
-  auto notifier_mock = std::make_unique<NotifierMock>();
-  auto ctx = std::make_unique<oxm::EventLoopContext>(std::move(notifier_mock));
+  auto ctx = std::make_unique<oxm::EventLoopContext<NotifierMock>>();
   oxm::Event event;
 
   SECTION("Throws an exception when trying to bind invalid event id") {
@@ -94,9 +99,8 @@ TEST_CASE("Handling of invalid input", kTag) {
 }
 
 TEST_CASE("Use notifier API properly", kTag) {
-  auto notifier_mock = std::make_unique<NotifierMock>();
-  auto* mock = notifier_mock.get();
-  auto ctx = std::make_unique<oxm::EventLoopContext>(std::move(notifier_mock));
+  auto ctx = std::make_unique<EventLoopContextMocked>();
+  auto* mock = &ctx->GetNotificator();
   int task_calls_count = 0;
 
   oxm::Event event;

@@ -8,7 +8,9 @@
 
 namespace oxm {
 
+template <typename TNotificator>
 struct EventLoopContext;
+
 struct Task;
 
 struct EventLoop {
@@ -52,7 +54,7 @@ struct EventLoop {
  private:
   Task* AllocateTask(size_t task_size);
 
-  std::unique_ptr<EventLoopContext> ctx_;
+  std::unique_ptr<EventLoopContext<void>> ctx_;
 };
 
 }  // namespace oxm
