@@ -64,7 +64,7 @@ struct TcpConnection : std::enable_shared_from_this<TcpConnection> {
  private:
   void OnError(oxm::Event::Mask mask) {
     PrintErrorMessage(mask);
-    loop_->Unshedule(event_id_, true);
+    loop_->Unschedule(event_id_, true);
   }
 
   void OnRead() {
@@ -131,7 +131,7 @@ struct TcpAcceptor : std::enable_shared_from_this<TcpAcceptor> {
  private:
   void OnError(oxm::Event::Mask mask) {
     PrintErrorMessage(mask);
-    loop_->Unshedule(event_id_, true);
+    loop_->Unschedule(event_id_, true);
   }
 
   void OnConnect() const {

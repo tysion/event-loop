@@ -21,7 +21,7 @@ struct EventLoopContext {
 
   void Schedule(Event::Id id);
 
-  void Unshedule(Event::Id id, bool forever);
+  void Unschedule(Event::Id id, bool forever);
 
   void Bind(Event::Id id, Task* task);
 
@@ -101,7 +101,7 @@ void EventLoopContext<TNotificator>::Schedule(Event::Id id) {
 }
 
 template <typename TNotificator>
-void EventLoopContext<TNotificator>::Unshedule(Event::Id id, bool forever) {
+void EventLoopContext<TNotificator>::Unschedule(Event::Id id, bool forever) {
   auto& [event, task] = GetEventBindById(id);
   if (forever) {
     DeallocateTask(task);

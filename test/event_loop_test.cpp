@@ -94,7 +94,7 @@ TEST_CASE("Handling of invalid input", kTag) {
   }
 
   SECTION("Throws an exception when trying to de-schedule invalid event id") {
-    REQUIRE_THROWS_AS(ctx->Unshedule(42, true), std::invalid_argument);
+    REQUIRE_THROWS_AS(ctx->Unschedule(42, true), std::invalid_argument);
   }
 }
 
@@ -124,7 +124,7 @@ TEST_CASE("Use notifier API properly", kTag) {
   }
 
   SECTION("Increments unwatch calls counter after de-scheduling") {
-    ctx->Unshedule(id, true);
+    ctx->Unschedule(id, true);
 
     REQUIRE(mock->watch_calls_counter == 0);
     REQUIRE(mock->modify_calls_counter == 0);

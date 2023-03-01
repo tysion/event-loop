@@ -41,7 +41,7 @@ int main() {
       auto _ = write(kStdOut, buf.data(), n);
     }
 
-    loop->Unshedule(print_input, false);
+    loop->Unschedule(print_input, false);
   });
 
   oxm::Task* print_error_task = loop->CreateTask([&](oxm::Event::Mask mask) {
@@ -53,7 +53,7 @@ int main() {
       auto _ = write(kStdErr, "error happened", 15);
     }
 
-    loop->Unshedule(print_error, false);
+    loop->Unschedule(print_error, false);
   });
 
   oxm::Task* read_input_task = loop->CreateTask([&](oxm::Event::Mask mask) {

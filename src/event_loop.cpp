@@ -20,8 +20,8 @@ void EventLoop::Schedule(Event::Id id) {
   return ctx_->impl.Schedule(id);
 }
 
-void EventLoop::Unshedule(Event::Id id, bool forever) {
-  ctx_->impl.Unshedule(id, forever);
+void EventLoop::Unschedule(Event::Id id, bool forever) {
+  ctx_->impl.Unschedule(id, forever);
 }
 
 void EventLoop::Bind(Event::Id id, Task* task) {

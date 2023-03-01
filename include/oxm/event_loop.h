@@ -39,7 +39,7 @@ struct EventLoop {
 
   void Schedule(Event::Id id);
 
-  void Unshedule(Event::Id id, bool forever);
+  void Unschedule(Event::Id id, bool forever);
 
   void Bind(Event::Id id, Task* task);
 
