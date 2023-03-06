@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
 
 add_subdirectory(src)
+link_libraries(atomic)
 
 if (OXMEL_BUILD_EXAMPLE)
     add_subdirectory(example)

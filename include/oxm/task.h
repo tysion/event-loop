@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "oxm/event_loop.h"
+#include "oxm/event.h"
 
 namespace oxm {
 

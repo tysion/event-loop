@@ -3,13 +3,12 @@
 #include <functional>
 #include <memory>
 
-#include "event.h"
-#include "task.h"
+#include "oxm/event.h"
+#include "oxm/task.h"
 
 namespace oxm {
 
 struct Context;
-struct Task;
 
 struct EventLoop {
   EventLoop();

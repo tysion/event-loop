@@ -2,13 +2,15 @@ set(SOURCES
     event_loop.cpp
     event_loop_context.h
     io/base_notificator.h
+    io/notificator.h
     io/linux/epoll_notificator.h
     io/linux/epoll_notificator.cpp
     memory/buddy_allocator.h
     memory/aligned_allocator.h
     memory/base_allocator.h task_allocator.h
     core/simd_algorithm.cpp
-    core/simd_algorithm.h io/notificator.h)
+    core/simd_algorithm.h
+        core/lock_free_queue.h)
 
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event.h
