@@ -36,27 +36,25 @@ struct LockFreeQueue {
     static_assert(Op == Operation::Enqueue || Op == Operation::Dequeue, "Invalid operation");
 
     Cell* cell;
+    size_t pos;
     std::atomic<size_t>& atomic_pos = Op == Operation::Enqueue ? enqueue_pos_ : dequeue_pos_;
-    size_t pos = atomic_pos.load(std::memory_order_relaxed);
 
     bool res = false;
     while (!res) {
+      pos = atomic_pos.load(std::memory_order_relaxed);
+
       cell = &buffer_[pos & buffer_mask_];
       size_t seq = cell->sequence_.load(std::memory_order_acquire);
 
-      intptr_t diff;
-      if constexpr (Op == Operation::Enqueue) {
-        diff = intptr_t(seq) - intptr_t(pos);
-      } else {
-        diff = intptr_t(seq) - intptr_t(pos + 1);
+      intptr_t diff = intptr_t(seq) - intptr_t(pos);
+      if constexpr (Op == Operation::Dequeue) {
+        --diff;
       }
 
       if (diff == 0) {
         res = atomic_pos.compare_exchange_weak(pos, pos + 1, std::memory_order_relaxed);
       } else if (diff < 0) {
         return {nullptr, 0};
-      } else {
-        pos = atomic_pos.load(std::memory_order_relaxed);
       }
     }
 
