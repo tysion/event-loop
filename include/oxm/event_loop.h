@@ -43,7 +43,7 @@ struct EventLoop {
   void Bind(Event::Id id, Task* task);
 
   /**
-   * Wait for events and executes callbacks
+   * wait_fn for events and executes callbacks
    * @param timeout the maximum wait time in milliseconds (-1 == infinite)
    */
   void Poll(int timeout = -1);

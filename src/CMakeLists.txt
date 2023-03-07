@@ -10,7 +10,7 @@ set(SOURCES
     memory/base_allocator.h task_allocator.h
     core/simd_algorithm.cpp
     core/simd_algorithm.h
-        core/lock_free_queue.h)
+        core/lock_free_queue.h multithreading/task_executor.cpp multithreading/task_executor.h ../include/oxm/executor.h)
 
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event.h
