@@ -45,6 +45,7 @@ struct EventLoop {
 
       void Execute(oxm::Event::Mask mask) final {
         callback_(mask);
+        status = Task::Status::Ready;
       }
 
      private:
