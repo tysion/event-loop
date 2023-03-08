@@ -24,6 +24,18 @@ struct Executor {
     wait_fn(predicate, user_data, ctx);
   }
 
+  template <typename Func>
+  void Wait(Func func) {
+    struct Wrapper {
+      Func pred;
+      static bool Call(void* self) {
+        return static_cast<Wrapper*>(self)->pred();
+      }
+    } wrapper{.pred = std::move(func)};
+
+    Wait(Wrapper::Call, &wrapper);
+  }
+
   ~Executor() {
     terminate_fn(ctx);
   }

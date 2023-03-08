@@ -32,8 +32,8 @@ struct TaskExecutor {
   static void ExecuteTaskPackage(TaskPackage&& package);
   void WaitPush(LockFreeQueue<TaskPackage>* queue, TaskPackage&& package);
 
-  static thread_local WorkQueue* local_work_queue_;
-  static thread_local uint32_t worker_id;
+  inline static thread_local WorkQueue* local_work_queue_;
+  inline static thread_local uint32_t worker_id_;
 
   std::atomic_bool done_;
   WorkQueue pool_work_queue_;

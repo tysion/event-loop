@@ -12,7 +12,7 @@ bool TaskExecutor::TryPopTaskFromPoolQueue(TaskPackage* task) {
 
 bool TaskExecutor::TryPopTaskFromOtherThreadQueue(TaskPackage* task) {
   for (uint32_t i = 0; i < queues_.size(); ++i) {
-    auto index = (worker_id + i + 1) % queues_.size();
+    auto index = (worker_id_ + i + 1) % queues_.size();
     if (queues_[index]->TryPop(*task)) {
       return true;
     }
@@ -22,8 +22,8 @@ bool TaskExecutor::TryPopTaskFromOtherThreadQueue(TaskPackage* task) {
 }
 
 void TaskExecutor::WorkerThread(uint32_t thread_id) {
-  worker_id = thread_id;
-  local_work_queue_ = queues_[worker_id].get();
+  worker_id_ = thread_id;
+  local_work_queue_ = queues_[worker_id_].get();
   while (!done_) {
     RunPendingTask();
   }
