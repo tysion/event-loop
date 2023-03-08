@@ -1,4 +1,4 @@
-#include "core/lock_free_queue.h"
+#include "multithreading/lock_free_queue.h"
 
 #include <thread>
 

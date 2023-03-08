@@ -4,7 +4,7 @@
 #include <thread>
 #include <vector>
 
-#include "core/lock_free_queue.h"
+#include "lock_free_queue.h"
 #include "oxm/executor.h"
 
 namespace oxm {
