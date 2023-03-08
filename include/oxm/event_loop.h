@@ -18,6 +18,26 @@ struct EventLoop {
   EventLoop& operator=(const EventLoop& other) = delete;
 
   template <typename T>
+  Event::Id Submit(Event event, T callback) {
+    const Event::Id id = RegisterEvent(event);
+    Bind(id, CreateTask(std::move(callback)));
+    return id;
+  }
+
+  void Schedule(Event::Id id);
+
+  void Unschedule(Event::Id id, bool forever);
+
+  /**
+   * wait_fn for events and executes callbacks
+   * @param timeout the maximum wait time in milliseconds (-1 == infinite)
+   */
+  void Poll(int timeout = -1);
+
+ private:
+  Task* AllocateTask(size_t task_size);
+
+  template <typename T>
   Task* CreateTask(T callback) {
     struct TaskWrapper final : Task {
       explicit TaskWrapper(T&& callback) : callback_{std::move(callback)} {
@@ -34,22 +54,9 @@ struct EventLoop {
     return new (AllocateTask(sizeof(TaskWrapper))) TaskWrapper(std::move(callback));
   }
 
-  Event::Id RegisterEvent(Event event);
-
-  void Schedule(Event::Id id);
-
-  void Unschedule(Event::Id id, bool forever);
-
   void Bind(Event::Id id, Task* task);
 
-  /**
-   * wait_fn for events and executes callbacks
-   * @param timeout the maximum wait time in milliseconds (-1 == infinite)
-   */
-  void Poll(int timeout = -1);
-
- private:
-  Task* AllocateTask(size_t task_size);
+  Event::Id RegisterEvent(Event event);
 
   std::unique_ptr<Context> ctx_;
 };
