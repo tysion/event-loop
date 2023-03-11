@@ -15,6 +15,8 @@ uint32_t ToEpollEvent(Event::Mask mask) {
     epoll_event |= EPOLLOUT;
   }
 
+  epoll_event |= EPOLLET;
+
   return epoll_event;
 }
 

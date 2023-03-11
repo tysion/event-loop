@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "io/notificator.h"
+#include "multithreading/task_executor.h"
 #include "oxm/task.h"
 #include "task_allocator.h"
 
@@ -11,7 +12,7 @@ namespace oxm {
 
 template <typename TNotificator>
 struct EventLoopContext {
-  explicit EventLoopContext() : notificator_{1024}, allocator_{32 * 1024} {
+  explicit EventLoopContext() : notificator_{1024}, allocator_{32 * 1024}, executor_{4, 1024 / 4} {
   }
 
   Task* AllocateTask(size_t task_size);
@@ -39,6 +40,7 @@ struct EventLoopContext {
   std::vector<std::pair<Event, Task*>> event_binds_;
 
   TaskAllocator allocator_;
+  TaskExecutor executor_;
 };
 
 struct Context {
@@ -63,7 +65,7 @@ void EventLoopContext<TNotificator>::Poll(int timeout) {
     const auto& [event, task] = event_binds_[id];
 
     task->status = Task::Status::InProgress;
-    task->Execute(mask);
+    executor_.PushTask(task, mask);
     task->status = Task::Status::Scheduled;
   }
 
