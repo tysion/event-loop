@@ -42,8 +42,8 @@ Event::Mask ToEventMask(uint32_t events) {
   return mask;
 }
 
-EpollNotificator::EpollNotificator(int approximate_events_count) {
-  events_.resize(approximate_events_count);
+EpollNotificator::EpollNotificator(int events_count) {
+  events_.resize(events_count);
 
   epfd_ = epoll_create1(EPOLL_CLOEXEC);
   if (epfd_ < 0) {
@@ -64,7 +64,6 @@ void EpollNotificator::Control(int cmd, int fd, Event::Mask mask, Event::Id id) 
 
 void EpollNotificator::WatchImpl(int fd, Event::Mask mask, Event::Id id) {
   Control(EPOLL_CTL_ADD, fd, mask, id);
-  ++events_count_;
 }
 
 void EpollNotificator::ModifyImpl(int fd, Event::Mask mask) {
@@ -73,14 +72,12 @@ void EpollNotificator::ModifyImpl(int fd, Event::Mask mask) {
 
 void EpollNotificator::UnwatchImpl(int fd) {
   Control(EPOLL_CTL_DEL, fd, Event::Mask{}, Event::Id{});
-  --events_count_;
 }
 
 void EpollNotificator::WaitImpl(int timeout, EventIds* ready_event_ids) {
   assert(ready_event_ids);
   assert(ready_event_ids->empty());
 
-  events_.resize(events_count_);
   const int num_ready_events = epoll_wait(epfd_, events_.data(), events_.size(), timeout);
   if (num_ready_events < 0) {
     throw std::runtime_error("failed to epoll_wait");
