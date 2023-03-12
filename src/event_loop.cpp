@@ -4,8 +4,8 @@
 
 namespace oxm {
 
-EventLoop::EventLoop() {
-  ctx_ = std::make_unique<Context>();
+EventLoop::EventLoop(const Options& options) {
+  ctx_ = std::make_unique<Context>(options);
 }
 
 void EventLoop::Poll(int timeout) {

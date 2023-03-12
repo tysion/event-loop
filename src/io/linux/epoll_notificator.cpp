@@ -42,7 +42,7 @@ Event::Mask ToEventMask(uint32_t events) {
   return mask;
 }
 
-EpollNotificator::EpollNotificator(int events_count) {
+EpollNotificator::EpollNotificator(size_t events_count) {
   events_.resize(events_count);
 
   epfd_ = epoll_create1(EPOLL_CLOEXEC);

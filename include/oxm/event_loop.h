@@ -5,13 +5,22 @@
 
 #include "oxm/event.h"
 #include "oxm/task.h"
+#include "oxm/executor.h"
 
 namespace oxm {
 
 struct Context;
 
+struct Options {
+  size_t number_events_per_poll = 1024;
+  size_t task_allocator_buffer_size = 32 * 1024;
+  size_t num_worker_threads = 4;
+  size_t worker_thread_queue_size = 128;
+  ExecutorPtr executor = nullptr;
+};
+
 struct EventLoop {
-  EventLoop();
+  EventLoop(const Options& options = {});
   ~EventLoop();
 
   EventLoop(const EventLoop& other) = delete;

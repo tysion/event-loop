@@ -1,8 +1,8 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <mutex>
+#include <vector>
 
 #include "io/notificator.h"
 #include "multithreading/async_mutex.h"
@@ -14,10 +14,12 @@ namespace oxm {
 
 template <typename TNotificator>
 struct EventLoopContext {
-  explicit EventLoopContext()
-      : notificator_{1024},
-        allocator_{32 * 1024},
-        executor_{MakeExecutor(4, 1024 / 4)},
+  explicit EventLoopContext(const Options& options = {})
+      : notificator_{options.number_events_per_poll},
+        allocator_{options.task_allocator_buffer_size},
+        executor_{options.executor
+                      ? options.executor
+                      : MakeExecutor(options.num_worker_threads, options.worker_thread_queue_size)},
         mutex_{executor_} {
   }
 
@@ -53,6 +55,9 @@ struct EventLoopContext {
 };
 
 struct Context {
+  Context(const Options& options) : impl{options} {
+  }
+
   EventLoopContext<Notificator> impl;
 };
 

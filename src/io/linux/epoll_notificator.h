@@ -7,7 +7,7 @@
 namespace oxm {
 
 struct EpollNotificator final : BaseNotificator<EpollNotificator> {
-  explicit EpollNotificator(int events_count);
+  explicit EpollNotificator(size_t events_count);
 
   void WatchImpl(int fd, Event::Mask mask, Event::Id id);
 
