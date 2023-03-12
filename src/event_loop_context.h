@@ -69,10 +69,7 @@ void EventLoopContext<TNotificator>::Poll(int timeout) {
 
   for (const auto& [mask, id] : ready_event_ids_) {
     const auto& [event, task] = event_binds_[id];
-
-    task->status = Task::Status::InProgress;
     executor_->PushTask(task, mask);
-    task->status = Task::Status::Scheduled;
   }
 
   ready_event_ids_.clear();
@@ -113,8 +110,6 @@ void EventLoopContext<TNotificator>::Schedule(Event::Id id) {
     throw std::logic_error("unable to schedule event with no bound task");
   }
 
-  task->status = Task::Status::Scheduled;
-
   notificator_.Watch(event.fd, event.mask, id);
 }
 
@@ -122,8 +117,6 @@ template <typename TNotificator>
 void EventLoopContext<TNotificator>::Unschedule(Event::Id id, bool forever) {
   auto lock = std::lock_guard(mutex_);
   auto& [event, task] = GetEventBindById(id);
-
-  task->status = Task::Status::None;
 
   if (forever) {
     DeallocateTask(task);
