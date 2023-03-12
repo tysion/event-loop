@@ -9,8 +9,6 @@
 
 namespace oxm {
 
-struct Context;
-
 struct Options {
   size_t number_events_per_poll = 1024;
   size_t task_allocator_buffer_size = 32 * 1024;
@@ -67,7 +65,9 @@ struct EventLoop {
 
   Event::Id RegisterEvent(Event event);
 
-  std::unique_ptr<Context> ctx_;
+  static constexpr size_t kContextSize = 168;
+  static constexpr size_t kContextAlignment = 8;
+  std::aligned_storage_t<kContextSize, kContextAlignment> ctx_;
 };
 
 }  // namespace oxm

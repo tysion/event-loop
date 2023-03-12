@@ -12,7 +12,7 @@ set(SOURCES
     core/simd_algorithm.h
     multithreading/lock_free_queue.h
     multithreading/task_executor.cpp
-    multithreading/task_executor.h multithreading/async_mutex.h)
+    multithreading/task_executor.h multithreading/async_mutex.h ../include/oxm/internal/fast_pimpl.h)
 
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/oxm/event.h

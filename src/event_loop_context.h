@@ -54,12 +54,7 @@ struct EventLoopContext {
   AsyncMutex mutex_;
 };
 
-struct Context {
-  Context(const Options& options) : impl{options} {
-  }
-
-  EventLoopContext<Notificator> impl;
-};
+using Context = EventLoopContext<Notificator>;
 
 template <typename TNotificator>
 Task* EventLoopContext<TNotificator>::AllocateTask(size_t task_size) {
@@ -69,7 +64,9 @@ Task* EventLoopContext<TNotificator>::AllocateTask(size_t task_size) {
 
 template <typename TNotificator>
 void EventLoopContext<TNotificator>::Poll(int timeout) {
-  auto lock = std::lock_guard(mutex_);
+  // TODO fix for call Poll from multiple threads
+  // because task may contain other blocking calls which leads to deadlock
+  // possible solution: make ready_event_ids_ static thread local
   notificator_.Wait(timeout, &ready_event_ids_);
 
   for (const auto& [mask, id] : ready_event_ids_) {
