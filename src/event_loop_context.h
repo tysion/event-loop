@@ -2,8 +2,10 @@
 
 #include <memory>
 #include <vector>
+#include <mutex>
 
 #include "io/notificator.h"
+#include "multithreading/async_mutex.h"
 #include "multithreading/task_executor.h"
 #include "oxm/task.h"
 #include "task_allocator.h"
@@ -12,11 +14,14 @@ namespace oxm {
 
 template <typename TNotificator>
 struct EventLoopContext {
-  explicit EventLoopContext() : notificator_{1024}, allocator_{32 * 1024}, executor_{4, 1024 / 4} {
+  explicit EventLoopContext()
+      : notificator_{1024},
+        allocator_{32 * 1024},
+        executor_{MakeExecutor(4, 1024 / 4)},
+        mutex_{executor_} {
   }
 
   Task* AllocateTask(size_t task_size);
-  void DeallocateTask(Task* task);
 
   Event::Id RegisterEvent(Event event);
 
@@ -35,12 +40,16 @@ struct EventLoopContext {
  private:
   std::pair<Event, Task*>& GetEventBindById(oxm::Event::Id id);
 
+  void DeallocateTask(Task* task);
+
   TNotificator notificator_;
   EventIds ready_event_ids_;
   std::vector<std::pair<Event, Task*>> event_binds_;
 
   TaskAllocator allocator_;
-  TaskExecutor executor_;
+  ExecutorPtr executor_;
+
+  AsyncMutex mutex_;
 };
 
 struct Context {
@@ -49,23 +58,20 @@ struct Context {
 
 template <typename TNotificator>
 Task* EventLoopContext<TNotificator>::AllocateTask(size_t task_size) {
+  auto lock = std::lock_guard(mutex_);
   return allocator_.Allocate(task_size);
 }
 
 template <typename TNotificator>
-void EventLoopContext<TNotificator>::DeallocateTask(Task* task) {
-  allocator_.Deallocate(task);
-}
-
-template <typename TNotificator>
 void EventLoopContext<TNotificator>::Poll(int timeout) {
+  auto lock = std::lock_guard(mutex_);
   notificator_.Wait(timeout, &ready_event_ids_);
 
   for (const auto& [mask, id] : ready_event_ids_) {
     const auto& [event, task] = event_binds_[id];
 
     task->status = Task::Status::InProgress;
-    executor_.PushTask(task, mask);
+    executor_->PushTask(task, mask);
     task->status = Task::Status::Scheduled;
   }
 
@@ -74,6 +80,8 @@ void EventLoopContext<TNotificator>::Poll(int timeout) {
 
 template <typename TNotificator>
 Event::Id EventLoopContext<TNotificator>::RegisterEvent(Event event) {
+  auto lock = std::lock_guard(mutex_);
+
   if (event.fd < 0) {
     throw std::invalid_argument("invalid file descriptor");
   }
@@ -88,6 +96,8 @@ Event::Id EventLoopContext<TNotificator>::RegisterEvent(Event event) {
 
 template <typename TNotificator>
 void EventLoopContext<TNotificator>::Bind(Event::Id id, Task* task) {
+  auto lock = std::lock_guard(mutex_);
+
   if (task == nullptr) {
     throw std::invalid_argument("unable to bind nullptr");
   }
@@ -96,6 +106,8 @@ void EventLoopContext<TNotificator>::Bind(Event::Id id, Task* task) {
 
 template <typename TNotificator>
 void EventLoopContext<TNotificator>::Schedule(Event::Id id) {
+  auto lock = std::lock_guard(mutex_);
+
   const auto& [event, task] = GetEventBindById(id);
   if (task == nullptr) {
     throw std::logic_error("unable to schedule event with no bound task");
@@ -108,6 +120,7 @@ void EventLoopContext<TNotificator>::Schedule(Event::Id id) {
 
 template <typename TNotificator>
 void EventLoopContext<TNotificator>::Unschedule(Event::Id id, bool forever) {
+  auto lock = std::lock_guard(mutex_);
   auto& [event, task] = GetEventBindById(id);
 
   task->status = Task::Status::None;
@@ -117,6 +130,11 @@ void EventLoopContext<TNotificator>::Unschedule(Event::Id id, bool forever) {
   }
 
   notificator_.Unwatch(event.fd);
+}
+
+template <typename TNotificator>
+void EventLoopContext<TNotificator>::DeallocateTask(Task* task) {
+  allocator_.Deallocate(task);
 }
 
 template <typename TNotificator>
