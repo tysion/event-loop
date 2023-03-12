@@ -3,20 +3,46 @@
 #include <functional>
 #include <memory>
 
-#include "event.h"
-#include "task.h"
+#include "oxm/event.h"
+#include "oxm/task.h"
+#include "oxm/executor.h"
 
 namespace oxm {
 
-struct Context;
-struct Task;
+struct Options {
+  size_t number_events_per_poll = 1024;
+  size_t task_allocator_buffer_size = 32 * 1024;
+  size_t num_worker_threads = 4;
+  size_t worker_thread_queue_size = 128;
+  ExecutorPtr executor = nullptr;
+};
 
 struct EventLoop {
-  EventLoop();
+  EventLoop(const Options& options = {});
   ~EventLoop();
 
   EventLoop(const EventLoop& other) = delete;
   EventLoop& operator=(const EventLoop& other) = delete;
+
+  template <typename T>
+  Event::Id Submit(Event event, T callback) {
+    const Event::Id id = RegisterEvent(event);
+    Bind(id, CreateTask(std::move(callback)));
+    return id;
+  }
+
+  void Schedule(Event::Id id);
+
+  void Unschedule(Event::Id id, bool forever);
+
+  /**
+   * wait_fn for events and executes callbacks
+   * @param timeout the maximum wait time in milliseconds (-1 == infinite)
+   */
+  void Poll(int timeout = -1);
+
+ private:
+  Task* AllocateTask(size_t task_size);
 
   template <typename T>
   Task* CreateTask(T callback) {
@@ -35,24 +61,13 @@ struct EventLoop {
     return new (AllocateTask(sizeof(TaskWrapper))) TaskWrapper(std::move(callback));
   }
 
-  Event::Id RegisterEvent(Event event);
-
-  void Schedule(Event::Id id);
-
-  void Unschedule(Event::Id id, bool forever);
-
   void Bind(Event::Id id, Task* task);
 
-  /**
-   * Wait for events and executes callbacks
-   * @param timeout the maximum wait time in milliseconds (-1 == infinite)
-   */
-  void Poll(int timeout = -1);
+  Event::Id RegisterEvent(Event event);
 
- private:
-  Task* AllocateTask(size_t task_size);
-
-  std::unique_ptr<Context> ctx_;
+  static constexpr size_t kContextSize = 168;
+  static constexpr size_t kContextAlignment = 8;
+  std::aligned_storage_t<kContextSize, kContextAlignment> ctx_;
 };
 
 }  // namespace oxm

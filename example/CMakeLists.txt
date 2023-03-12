@@ -10,5 +10,4 @@ macro(add_example name sources)
         ARCHIVE DESTINATION lib)
 endmacro()
 
-add_example(simple simple.cpp)
 add_example(tcp_echo_server tcp_echo_server.cpp)

@@ -12,7 +12,9 @@ struct Event {
     Read = 1 << 0,
     Write = 1 << 1,
     FileDescriptorError = 1 << 2,
-    RemoteConnectionClosed = 1 << 3
+    RemoteConnectionClosed = 1 << 3,
+
+    ReadWrite = Read | Write
   };
 
   struct Mask {
@@ -47,5 +49,14 @@ struct Event {
   int fd = -1;
   Mask mask = {};
 };
+
+inline Event MakeEvent(int fd, std::initializer_list<Event::Type> event_types) {
+  Event event;
+  event.fd = fd;
+  for (const auto event_type: event_types) {
+    event.mask.Set(event_type);
+  }
+  return event;
+}
 
 }  // namespace oxm

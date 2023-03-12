@@ -7,7 +7,7 @@
 namespace oxm {
 
 struct EpollNotificator final : BaseNotificator<EpollNotificator> {
-  explicit EpollNotificator(int approximate_events_count);
+  explicit EpollNotificator(size_t events_count);
 
   void WatchImpl(int fd, Event::Mask mask, Event::Id id);
 
@@ -20,7 +20,6 @@ struct EpollNotificator final : BaseNotificator<EpollNotificator> {
   void Control(int cmd, int fd, Event::Mask mask, Event::Id id);
 
   int epfd_;
-  size_t events_count_ = 0;
   std::vector<epoll_event> events_;
 };
 

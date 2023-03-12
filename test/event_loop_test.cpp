@@ -12,7 +12,7 @@ struct NotifierMock : oxm::BaseNotificator<NotifierMock> {
 
   oxm::EventIds events;
 
-  NotifierMock(uint32_t num_events) {
+  NotifierMock(size_t num_events) {
     events.reserve(num_events);
   }
 
